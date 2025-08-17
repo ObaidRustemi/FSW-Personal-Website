@@ -108,6 +108,31 @@ bottom: 2px; */
   margin-right: auto;
   margin-top: 3%;
   margin-bottom: 3%;
+  width: 380px;
+  height: auto;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+#profilePhoto:hover {
+  transform: scale(1.08) translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.05);
+}
+
+.profile-photo {
+  width: 380px;
+  height: auto;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.profile-photo:hover {
+  transform: scale(1.08) translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.05);
 }
 
 .project-description-p {

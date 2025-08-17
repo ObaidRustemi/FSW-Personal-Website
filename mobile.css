@@ -51,8 +51,17 @@
     grid-area: m;
   }
   #mobileProfilePhoto {
-    height: 200px;
+    height: 280px;
     width: auto;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  #mobileProfilePhoto:hover {
+    transform: scale(1.08) translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    filter: brightness(1.05);
   }
 
   #mobile-linkedin-icon {

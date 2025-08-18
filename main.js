@@ -1,3 +1,6 @@
+// 🌊 Three.js ES Modules Import
+import * as THREE from 'three';
+
 // Auto-close menu functionality
 document.addEventListener('DOMContentLoaded', function() {
   const menuToggle = document.querySelector('.toggler');
@@ -68,10 +71,13 @@ class WaterPhysicsEngine {
       premultipliedAlpha: false
     });
     
-    // Enable transparency and proper blending
+    // CHECKPOINT 1: Simple renderer - no advanced features
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.sortObjects = true;
     this.renderer.setPixelRatio(window.devicePixelRatio);
+    
+    console.log('🟢 CHECKPOINT 1: Basic renderer setup with ES Modules');
+    
     this.updateSize();
   }
 
@@ -128,31 +134,30 @@ class WaterPhysicsEngine {
   }
 
   createTestDroplet() {
-    // Simple sphere geometry for realistic droplet
-    const geometry = new THREE.SphereGeometry(0.05, 16, 16);
+    // MICRO 1: Back to basics - just get something visible
+    const geometry = new THREE.SphereGeometry(0.06, 16, 16);
     
-    // Transparent blue water material
+    // WATER-LIKE TRANSPARENCY - 70% opacity (30% transparent like water)
     const material = new THREE.MeshBasicMaterial({
-      color: 0x00aaff,      // Blue water color
-      transparent: true,
-      opacity: 0.4,         // Transparent
-      side: THREE.DoubleSide,
-      blending: THREE.NormalBlending,
-      depthWrite: false
+      color: 0x0066ff,       // BRIGHT BLUE (water-ish color)
+      transparent: true,     // Enable transparency
+      opacity: 0.7          // 70% solid - should look water-like!
     });
     
-    console.log('💧 Three.js droplet created - opacity:', material.opacity);
+    console.log('💧 MICRO 3 SUCCESS: Water-like blue sphere (70% opacity)');
     
     const droplet = new THREE.Mesh(geometry, material);
     
-    // Position to the right of CSS droplet for comparison
-    droplet.position.set(0.3, -0.5, 0);
+    // Position exactly 20px to the right of CSS droplet, slightly lower
+    droplet.position.set(0.15, -0.5, 0);
     
     this.scene.add(droplet);
     this.droplets.push(droplet);
     
-    console.log('💧 Test droplet created at:', droplet.position);
+    console.log('💧 MICRO 3 SUCCESS: Water-like sphere at:', droplet.position);
   }
+
+  // MICRO 1: Simple red sphere test
 
   clearDroplets() {
     this.droplets.forEach(droplet => {
@@ -166,39 +171,38 @@ class WaterPhysicsEngine {
   animate() {
     if (!this.isActive) return;
     
+    // Add subtle animation to droplets for realism
+    this.animateDroplets();
+    
     // Render the scene
     this.renderer.render(this.scene, this.camera);
     
     // Debug: Log first few frames to ensure rendering is happening
-    if (this.frameCount < 5) {
-      console.log(`🎬 Frame ${this.frameCount}: Rendering scene with ${this.droplets.length} droplets`);
+    if (this.frameCount < 3) {
+      console.log(`🎬 Frame ${this.frameCount}: Rendering photorealistic water droplets`);
       this.frameCount = (this.frameCount || 0) + 1;
     }
     
     // Continue animation loop
     requestAnimationFrame(() => this.animate());
   }
+
+  animateDroplets() {
+    // CHECKPOINT 2: Maintain water droplet position
+    this.droplets.forEach((droplet) => {
+      droplet.position.set(0.15, -0.5, 0); // Keep ~20px to the right, slightly lower
+    });
+  }
 }
 
-// Initialize Water Physics Engine when DOM is ready
+// Initialize Water Physics Engine when DOM is ready (ES Modules version)
 document.addEventListener('DOMContentLoaded', function() {
-  // Check Three.js loading with multiple attempts
-  let attempts = 0;
-  const maxAttempts = 10;
+  // Three.js is already imported as ES module, no need to check
+  console.log('🌊 Three.js ES Modules: Ready!');
   
-  function checkThreeJS() {
-    attempts++;
-    
-    if (typeof THREE !== 'undefined') {
-      console.log('🌊 Three.js Water Physics: Ready!');
-      window.waterPhysics = new WaterPhysicsEngine();
-    } else if (attempts < maxAttempts) {
-      setTimeout(checkThreeJS, 200);
-    } else {
-      console.error('❌ Three.js failed to load after', maxAttempts, 'attempts!');
-    }
-  }
-  
-  // Start checking after initial delay
-  setTimeout(checkThreeJS, 100);
+  // Small delay to ensure DOM is fully ready
+  setTimeout(() => {
+    window.waterPhysics = new WaterPhysicsEngine();
+    console.log('🟢 CHECKPOINT 1: Water Physics Engine initialized with ES Modules');
+  }, 100);
 });

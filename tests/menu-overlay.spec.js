@@ -96,6 +96,37 @@ test.describe('Menu Overlay System', () => {
     expect(true).toBe(true); // Functionality test passed
   });
 
+  test('hamburger hover effect works', async ({ page }) => {
+    const toggler = page.locator('.toggler');
+    const hamburgerIcon = page.locator('.hamburger > div');
+    
+    // Check hamburger is visible (via toggler)
+    await expect(toggler).toBeAttached();
+    await expect(hamburgerIcon).toBeVisible();
+    
+    // Get initial transform state (should be 'none' or identity matrix)
+    const initialTransform = await hamburgerIcon.evaluate(el => getComputedStyle(el).transform);
+    
+    // Hover over toggler (which triggers hamburger animation)
+    await toggler.hover();
+    await page.waitForTimeout(600); // Wait for CSS transition (450deg rotation takes time)
+    
+    // Check that transform changed on hover (rotation effect)
+    const hoveredTransform = await hamburgerIcon.evaluate(el => getComputedStyle(el).transform);
+    
+    // The transform should change from initial state (450deg rotation effect)
+    expect(hoveredTransform).not.toBe(initialTransform);
+    expect(hoveredTransform).toContain('matrix'); // CSS transforms show as matrix
+    
+    // Move away from toggler
+    await page.locator('body').hover(); 
+    await page.waitForTimeout(600);
+    
+    // Transform should return to normal
+    const normalTransform = await hamburgerIcon.evaluate(el => getComputedStyle(el).transform);
+    expect(normalTransform).toBe(initialTransform);
+  });
+
   test('overlay has correct visual properties', async ({ page }) => {
     // Open menu
     await page.locator('.toggler').click();

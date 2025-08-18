@@ -90,8 +90,8 @@ async function createWaterShaderPlane() {
     return createFallbackPlane();
   }
   
-  // Create a plane geometry that covers the screen
-  const geometry = new THREE.PlaneGeometry(2, 2);
+  // Create a plane geometry with subdivisions to show noise displacement
+  const geometry = new THREE.PlaneGeometry(2, 2, 32, 32); // 32x32 subdivisions
   
   // Create shader material with our custom shaders
   waterMaterial = new THREE.ShaderMaterial({

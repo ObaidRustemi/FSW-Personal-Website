@@ -1,8 +1,8 @@
 /**
  * 🌊 WATER VERTEX SHADER
  * 
- * Basic vertex shader for water surface effects
- * Handles geometry transformations and prepares data for fragment shader
+ * Advanced vertex shader for realistic water surface effects
+ * Features 2D Simplex noise for natural surface displacement
  */
 
 // Vertex attributes (automatically provided by Three.js)
@@ -17,15 +17,85 @@ uniform vec2 uResolution;   // Screen resolution
 varying vec2 vUv;           // UV coordinates for fragment shader
 varying vec3 vPosition;     // World position for fragment shader
 
+// NOISE 1: 2D Simplex Noise Function
+// Based on optimized simplex noise by Ian McEwan, Ashima Arts
+vec3 mod289(vec3 x) {
+  return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+
+vec2 mod289(vec2 x) {
+  return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+
+vec3 permute(vec3 x) {
+  return mod289(((x*34.0)+1.0)*x);
+}
+
+float snoise(vec2 v) {
+  const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
+                      0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
+                     -0.577350269189626,  // -1.0 + 2.0 * C.x
+                      0.024390243902439); // 1.0 / 41.0
+  
+  // First corner
+  vec2 i  = floor(v + dot(v, C.yy) );
+  vec2 x0 = v -   i + dot(i, C.xx);
+
+  // Other corners
+  vec2 i1;
+  i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+  vec4 x12 = x0.xyxy + C.xxzz;
+  x12.xy -= i1;
+
+  // Permutations
+  i = mod289(i); // Avoid truncation effects in permutation
+  vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+		+ i.x + vec3(0.0, i1.x, 1.0 ));
+
+  vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+  m = m*m ;
+  m = m*m ;
+
+  // Gradients: 41 points uniformly over a line, mapped onto a diamond.
+  // The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)
+  vec3 x = 2.0 * fract(p * C.www) - 1.0;
+  vec3 h = abs(x) - 0.5;
+  vec3 ox = floor(x + 0.5);
+  vec3 a0 = x - ox;
+
+  // Normalise gradients implicitly by scaling m
+  // Approximation of: m *= inversesqrt( a0*a0 + h*h );
+  m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+
+  // Compute final noise value at P
+  vec3 g;
+  g.x  = a0.x  * x0.x  + h.x  * x0.y;
+  g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+  return 130.0 * dot(m, g);
+}
+
 void main() {
   // Pass UV coordinates to fragment shader
   vUv = uv;
   
-  // Calculate world position
-  vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+  // NOISE 2: Apply simple noise displacement to vertex position
+  vec3 pos = position;
+  
+  // Create noise coordinates based on UV position
+  vec2 noiseCoord = uv * 8.0; // Scale for noise frequency
+  
+  // Generate noise value (-1 to 1)
+  float noiseValue = snoise(noiseCoord);
+  
+  // Apply displacement along Z-axis (up/down) for water surface effect
+  float displacementStrength = 0.1; // Adjust for wave height
+  pos.z += noiseValue * displacementStrength;
+  
+  // Calculate world position with displacement
+  vec4 worldPosition = modelMatrix * vec4(pos, 1.0);
   vPosition = worldPosition.xyz;
   
-  // Basic vertex transformation (no displacement yet)
-  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+  // Apply transformation with noise displacement
+  vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   gl_Position = projectionMatrix * mvPosition;
 }

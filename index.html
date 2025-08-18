@@ -25,6 +25,16 @@
     <title>Obaid Rustemi's Website</title>
   </head>
   <body>
+  
+    <!-- SHADER SYSTEM: Three.js ES Modules for WebGL Water Shaders -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
+        }
+      }
+    </script>
     <!-- 🌊 TIER A: SVG Filters for Realistic Water Droplets -->
     <svg width="0" height="0" style="position: absolute; pointer-events: none;" aria-hidden="true">
       <defs>
@@ -450,5 +460,8 @@
         </div>
       </div>
     </div>
+
+    <!-- SHADER SYSTEM: WebGL Water Effects (loads after DOM) -->
+    <script type="module" src="shader-system.js"></script>
   </body>
 </html>

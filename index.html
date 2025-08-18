@@ -2,6 +2,8 @@
 <html lang="en">
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- 🌊 Three.js for Photorealistic Water Physics -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script defer src="main.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
@@ -39,6 +41,20 @@
         
         <!-- 💧 Phase 1: Single static water dot -->
         <div class="water-dot"></div>
+        
+        <!-- 🌊 Three.js Water Physics Canvas -->
+        <canvas id="water-physics-canvas" style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: -1;
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          background: transparent;
+        "></canvas>
       </div>
     </div>
 

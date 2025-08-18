@@ -25,7 +25,7 @@ test.describe('Menu Overlay System', () => {
     await expect(menu).toHaveCSS('visibility', 'visible');
     
     // Check overlay exists and is transformed (any scale > 0.5 means it's opening/open)
-    const overlay = page.locator('.menu > div');
+    const overlay = page.locator('.menu-overlay');
     await expect(overlay).toBeVisible();
 
     // Click hamburger again to close menu
@@ -101,7 +101,7 @@ test.describe('Menu Overlay System', () => {
     await page.locator('.toggler').click();
     await page.waitForTimeout(600); // Wait for animation to complete
     
-    const overlay = page.locator('.menu > div');
+    const overlay = page.locator('.menu-overlay');
     
     // Check overlay is visible and has reasonable size (computed values vary)
     await expect(overlay).toBeVisible();
@@ -165,7 +165,7 @@ test.describe('Menu Overlay System', () => {
     await expect(menu).toHaveCSS('visibility', 'visible');
     
     // Check overlay covers screen (size should be reasonable for mobile)
-    const overlay = page.locator('.menu > div');
+    const overlay = page.locator('.menu-overlay');
     const overlaySize = await overlay.boundingBox();
     expect(overlaySize.width).toBeGreaterThan(300); // Should cover mobile screen
     expect(overlaySize.height).toBeGreaterThan(300);

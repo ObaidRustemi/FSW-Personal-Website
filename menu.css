@@ -82,12 +82,12 @@
 }
 
 
-.menu-wrap .toggler:checked ~ .menu > div {
+.menu-wrap .toggler:checked ~ .menu .menu-overlay {
   transform: scale(1);
   transition-duration: var(--menu-speed);
 }
 
-.menu-wrap .toggler:checked ~ .menu > div > div {
+.menu-wrap .toggler:checked ~ .menu .menu-content {
     opacity: 1;
     transition: opacity 0.4s ease;
 }
@@ -105,7 +105,7 @@
   justify-content: center;
 }
 
-.menu-wrap .menu > div {
+.menu-wrap .menu .menu-overlay {
   background-color: rgba(255, 255, 255, 0.17);
   backdrop-filter: blur(7px);
   border-radius: 50%;
@@ -119,7 +119,7 @@
   transition: all 0.4s ease;
 }
 
-.menu-wrap .menu > div > div {
+.menu-wrap .menu .menu-content {
   text-align: center;
   max-width: 90vw;
   max-height: 100vh;
@@ -127,20 +127,20 @@
   transition: opacity 0.4s ease;
 }
 
-.menu-wrap .menu > div > div > ul > li {
+.menu-wrap .menu .menu-content ul li {
   list-style: none;
   color: black;
   font-size: 1.6rem;
   padding: 1rem;
 }
 
-.menu-wrap .menu > div > div > ul > li > a {
+.menu-wrap .menu .menu-content ul li a {
   color: inherit;
   text-decoration: none;
   transition: color 0.4s ease;
 }
 
-.menu-wrap .menu > div > div > ul > li:hover {
+.menu-wrap .menu .menu-content ul li:hover {
     color: white;
 }
 

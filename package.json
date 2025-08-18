@@ -1,0 +1,19 @@
+{
+  "name": "fsw-personal-website",
+  "version": "1.0.0",
+  "description": "Obaid Rustemi's Personal Website with Water Droplet Effects",
+  "scripts": {
+    "test": "playwright test --config=playwright.config.simple.js",
+    "test:full": "playwright test",
+    "test:headed": "playwright test --config=playwright.config.simple.js --headed",
+    "test:debug": "playwright test --config=playwright.config.simple.js --debug",
+    "start": "python3 -m http.server 8080",
+    "start:sync": "browser-sync start --server --files '*.html,*.css,*.js' --port 3000"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "keywords": ["personal-website", "water-effects", "ui-testing"],
+  "author": "Obaid Rustemi",
+  "license": "MIT"
+}

@@ -119,11 +119,16 @@
 }
 
 .menu-wrap .menu .menu-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   text-align: center;
   max-width: 90vw;
   max-height: 100vh;
   opacity: 0;
   transition: opacity 0.4s ease;
+  z-index: 1000;
 }
 
 .menu-wrap .menu .menu-content ul li {
@@ -143,25 +148,61 @@
     color: white;
 }
 
-/* 💧 Phase 1: Single Static Water Dot */
-.water-dot {
+/* TIER A: CSS Droplet System - Professional Fallback */
+.droplets {
   position: absolute;
-  top: 75%;
-  left: 50%;
-  width: 30px;
-  height: 30px;
-  background-color: rgba(255, 255, 255, 0.6);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
   pointer-events: none;
-  z-index: 100;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
 }
 
-/* Show water dot only when menu is open */
-.menu-wrap .toggler:checked ~ .menu .water-dot {
+/* Basic droplet styling with dynamic animation */
+.drop {
+  position: absolute;
+  width: calc(32px * var(--size, 1));
+  height: calc(50px * var(--size, 1));
+  opacity: 0.85;
+  transform-origin: center bottom;
+  animation: creep var(--duration, 12s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+/* Droplet fill color - translucent white for glass effect */
+.drop path {
+  fill: rgba(255, 255, 255, 0.12);
+  stroke: none;
+}
+
+/* Show droplets only when menu is open */
+.menu-wrap .toggler:checked ~ .menu .droplets {
   opacity: 1;
 }
+
+/* TIER A-5: Creep Animation - Realistic Water Droplet Sliding */
+@keyframes creep {
+  0% {
+    transform: translateY(0) translateX(0) scale(var(--size, 1));
+    opacity: 0.85;
+  }
+  15% {
+    opacity: 0.9;
+    transform: translateY(8vh) translateX(2px) scale(calc(var(--size, 1) * 1.1));
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(35vh) translateX(-1px) scale(calc(var(--size, 1) * 0.95));
+  }
+  85% {
+    opacity: 0.6;
+    transform: translateY(80vh) translateX(3px) scale(calc(var(--size, 1) * 0.9));
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100vh) translateX(-2px) scale(calc(var(--size, 1) * 0.8));
+  }
+}
+
+
 
 

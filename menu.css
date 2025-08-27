@@ -209,6 +209,29 @@
   }
 }
 
+/* Rain compositor layer sits above frost, below UI/content */
+.menu-wrap .menu .rain-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.menu-wrap .menu .rain-layer canvas#rain-glass {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Show rain compositor when menu opens */
+.menu-wrap .toggler:checked ~ .menu .rain-layer {
+  opacity: 1;
+}
+
 
 
 

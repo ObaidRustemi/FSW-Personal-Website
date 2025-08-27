@@ -10,6 +10,7 @@
         }
       }
     </script>
+    <!-- legacy reference left intentionally; file may be absent -->
     <script type="module" defer src="main.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
@@ -19,6 +20,8 @@
     <link rel="stylesheet" href="landing.css" /> 
     <link rel="stylesheet" href="menu.css" />
     <link rel="stylesheet" href="mobile.css" />
+    <!-- html2canvas for capturing background under the overlay -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -59,6 +62,11 @@
       <div class="menu">
         <!-- Layer 1: Backdrop Frost (enhanced frosted glass) -->
         <div class="menu-overlay" aria-hidden="true"></div>
+        
+        <!-- Rain on Glass compositor canvas (renders refractive droplets) -->
+        <div class="rain-layer" aria-hidden="true">
+          <canvas id="rain-glass"></canvas>
+        </div>
         
         <!-- Layer 2: TIER A SVG Droplets with Enhanced Randomization -->
         <div class="droplets" aria-hidden="true">
@@ -463,5 +471,7 @@
 
     <!-- SHADER SYSTEM: WebGL Water Effects (loads after DOM) -->
     <script type="module" src="shader-system.js"></script>
+    <!-- Rain on Glass compositor (Canvas2D) -->
+    <script type="module" src="rain-on-glass.js"></script>
   </body>
 </html>

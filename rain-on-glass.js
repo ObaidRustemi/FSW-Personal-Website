@@ -96,7 +96,8 @@ class RainOnGlass {
       vx: (Math.random() - 0.5) * 0.4,
       vy: 0,
       stretch: 1,
-      stick: 0.92 + Math.random() * 0.06
+      stick: 0.92 + Math.random() * 0.06,
+      label: Math.random() < 0.08 // occasional labeled droplet for deployment verification
     });
   }
 
@@ -165,6 +166,20 @@ class RainOnGlass {
       ctx.strokeStyle = 'rgba(255,255,255,0.18)';
       ctx.lineWidth = Math.max(1, this.dpr) / this.dpr;
       ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+
+      // Temporary deployment marker: label a few droplets
+      if (d.label) {
+        ctx.save();
+        ctx.font = 'bold 12px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        const ty = y - ry - 6;
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+        ctx.strokeText('RAINDROP', x, ty);
+        ctx.fillStyle = '#4dff87';
+        ctx.fillText('RAINDROP', x, ty);
+        ctx.restore();
+      }
     }
   }
 

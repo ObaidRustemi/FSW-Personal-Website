@@ -9,7 +9,7 @@ const TEST_MODE = (typeof navigator !== 'undefined' && (navigator.webdriver === 
 class RainOnGlass {
   constructor(canvas, options = {}) {
     this.canvas = canvas;
-    this.ctx = this.canvas.getContext('2d');
+    this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
     this.dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
     this.drops = [];
     this.micro = [];
@@ -21,8 +21,8 @@ class RainOnGlass {
     // offscreen buffers for sharp/blurred background
     this.bgSharp = document.createElement('canvas');
     this.bgBlur = document.createElement('canvas');
-    this.bgSharpCtx = this.bgSharp.getContext('2d');
-    this.bgBlurCtx = this.bgBlur.getContext('2d');
+    this.bgSharpCtx = this.bgSharp.getContext('2d', { willReadFrequently: true });
+    this.bgBlurCtx = this.bgBlur.getContext('2d', { willReadFrequently: true });
     
     // Multi-pass blur system (inspired by WebGL implementation)
     this.blurSteps = []; // Array of canvas buffers for downsampling/upsampling
@@ -34,7 +34,7 @@ class RainOnGlass {
     
     // trail buffer for condensation trails and water film
     this.trailBuffer = document.createElement('canvas');
-    this.trailCtx = this.trailBuffer.getContext('2d');
+    this.trailCtx = this.trailBuffer.getContext('2d', { willReadFrequently: true });
 
     const q = urlParams;
 
@@ -59,9 +59,9 @@ class RainOnGlass {
     
     // condensation configuration
     this.enableCondensation = (q.get('condensation') ?? options.condensation ?? '1') !== '0';
-    this.condensationDensity = Number(q.get('condDensity')) || options.condensationDensity || 0.3; // 0-1
-    this.condensationSize = Number(q.get('condSize')) || options.condensationSize || 0.8; // multiplier for tiny droplets
-    this.condensationSparkle = Number(q.get('condSparkle')) || options.condensationSparkle || 0.6; // 0-1 sparkle intensity
+    this.condensationDensity = Number(q.get('condDensity')) || options.condensationDensity || 0.8; // Increased for dense coverage
+    this.condensationSize = Number(q.get('condSize')) || options.condensationSize || 1.2; // Larger micro-droplets
+    this.condensationSparkle = Number(q.get('condSparkle')) || options.condensationSparkle || 0.9; // More sparkle
     
     // enhanced physics configuration
     this.enableTrails = (q.get('trails') ?? options.enableTrails ?? '1') !== '0';
@@ -75,6 +75,27 @@ class RainOnGlass {
     // control panel properties
     this.sizeVariance = Number(q.get('sizeVariance')) || options.sizeVariance || 1.0; // drop size variance multiplier
     this.trailIntensity = Number(q.get('trailIntensity')) || options.trailIntensity || 0.5; // trail intensity multiplier
+    
+    // Advanced physics parameters (inspired by RaindropFX)
+    this.trailDropDensity = Number(q.get('trailDensity')) || options.trailDropDensity || 0.2; // density of trail droplets
+    this.trailDistance = [Number(q.get('trailDistMin')) || options.trailDistance?.[0] || 20, 
+                         Number(q.get('trailDistMax')) || options.trailDistance?.[1] || 30]; // trail droplet spacing
+    this.trailDropSize = [Number(q.get('trailSizeMin')) || options.trailDropSize?.[0] || 0.3,
+                         Number(q.get('trailSizeMax')) || options.trailDropSize?.[1] || 0.5]; // trail droplet size range
+    this.trailSpread = Number(q.get('trailSpread')) || options.trailSpread || 0.6; // trail spread factor
+    this.velocitySpread = Number(q.get('velocitySpread')) || options.velocitySpread || 0.3; // velocity-based spread
+    this.evaporate = Number(q.get('evaporate')) || options.evaporate || 10; // evaporation rate
+    this.shrinkRate = Number(q.get('shrinkRate')) || options.shrinkRate || 0.01; // size shrinking rate
+    this.xShifting = [Number(q.get('xShiftMin')) || options.xShifting?.[0] || 0,
+                     Number(q.get('xShiftMax')) || options.xShifting?.[1] || 0.1]; // horizontal drift range
+    
+    // Advanced rendering parameters
+    this.refractBase = Number(q.get('refractBase')) || options.refractBase || 0.2; // base refraction strength (reduced for realism)
+    this.refractScale = Number(q.get('refractScale')) || options.refractScale || 0.4; // refraction scaling (reduced for realism)
+    this.raindropLightPos = options.raindropLightPos || [-1, 1, 2, 0]; // light position for highlights
+    this.raindropDiffuseLight = options.raindropDiffuseLight || [0.2, 0.2, 0.2]; // diffuse lighting
+    this.raindropShadowOffset = Number(q.get('shadowOffset')) || options.raindropShadowOffset || 0.8; // shadow offset
+    this.raindropLightBump = Number(q.get('lightBump')) || options.raindropLightBump || 1; // lighting bump factor
 
     // standalone/demo configuration
     this.standalone = Boolean(options.standalone);
@@ -370,6 +391,18 @@ class RainOnGlass {
     this.clear();
   }
 
+  pause() {
+    this.running = false;
+    // Don't clear drops - keep them frozen in place
+  }
+
+  resume() {
+    if (this.running) return;
+    this.running = true;
+    this.last = performance.now();
+    requestAnimationFrame(this.loop);
+  }
+
   resize() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -455,6 +488,9 @@ class RainOnGlass {
       }
       radius *= this.dpr * this.sizeVariance; // Apply size variance multiplier
     }
+    
+    // Ensure minimum radius to prevent rendering errors
+    radius = Math.max(0.5, radius);
     
     const spawnX = x ?? (radius + Math.random() * (this.canvas.width - 2 * radius));
     
@@ -563,23 +599,24 @@ class RainOnGlass {
   }
 
   spawnCondensation() {
-    if (!this.enableCondensation || this.condensation.length >= 2000) return;
+    if (!this.enableCondensation || this.condensation.length >= 3000) return; // Increased limit
     
-    // Spawn tiny condensation droplets across the surface
-    const count = Math.floor(this.condensationDensity * 20 * Math.random()); // Reduced from 50
+    // Spawn dense micro-condensation like the reference implementation
+    const count = Math.floor(this.condensationDensity * 40 * Math.random()); // Much higher density
     for (let i = 0; i < count; i++) {
       const x = Math.random() * this.canvas.width;
       const y = Math.random() * this.canvas.height;
-      const size = (0.5 + Math.random() * 1.5) * this.condensationSize * this.dpr;
+      const size = (0.2 + Math.random() * 1.8) * this.condensationSize * this.dpr; // More size variation
       
       this.condensation.push({
         x: x,
         y: y,
         r: size,
         sparkle: Math.random() * this.condensationSparkle,
-        life: 0.8 + Math.random() * 0.4, // 0.8-1.2
+        life: 0.6 + Math.random() * 0.8, // Longer life for dense coverage
         age: 0,
-        twinkle: Math.random() * Math.PI * 2 // for sparkle animation
+        twinkle: Math.random() * Math.PI * 2, // for sparkle animation
+        _isMicroCondensation: true // Mark for special rendering
       });
     }
   }
@@ -588,18 +625,21 @@ class RainOnGlass {
     try {
       if (!this.enableTrails || !this.trailCtx) return;
       
-      // More realistic trail parameters
-      const baseWidth = Math.max(0.8, drop.r * 0.4); // Thinner base width
-      const widthVariation = baseWidth * 0.3; // Add natural variation
+      // Enhanced trail parameters using RaindropFX-inspired system
+      const baseWidth = Math.max(0.8, drop.r * 0.4 * this.trailSpread);
+      const widthVariation = baseWidth * 0.3;
       const w = baseWidth + (Math.random() - 0.5) * widthVariation;
       
-      // More subtle alpha with size-based variation
-      const baseAlpha = Math.min(0.25, 0.05 + drop.r * 0.008);
-      const alphaVariation = baseAlpha * 0.4;
+      // Enhanced trail visibility for realistic rivulets
+      const trailSpeed = Math.hypot(drop.vx, drop.vy);
+      const velocityFactor = Math.min(1, trailSpeed / 8); // Normalize speed
+      const baseAlpha = Math.min(0.4, 0.1 + drop.r * 0.012 + velocityFactor * 0.15); // More visible trails
+      const alphaVariation = baseAlpha * 0.3;
       const alpha = baseAlpha + (Math.random() - 0.5) * alphaVariation;
       
-      // Add slight horizontal drift for more natural flow
-      const drift = (Math.random() - 0.5) * 0.5;
+      // Enhanced horizontal drift using xShifting parameters
+      const driftRange = this.xShifting[1] - this.xShifting[0];
+      const drift = this.xShifting[0] + Math.random() * driftRange;
       const midX = (prevX + drop.x) / 2 + drift;
       const midY = (prevY + drop.y) / 2;
       
@@ -615,8 +655,53 @@ class RainOnGlass {
       this.trailCtx.quadraticCurveTo(midX, midY, drop.x, drop.y);
       this.trailCtx.stroke();
       this.trailCtx.restore();
+      
+      // Spawn trail droplets occasionally (inspired by RaindropFX)
+      if (Math.random() < this.trailDropDensity * 0.1) {
+        this.spawnTrailDroplet(drop, prevX, prevY);
+      }
     } catch (error) {
       console.warn('Error in layTrail:', error);
+    }
+  }
+  
+  spawnTrailDroplet(parentDrop, prevX, prevY) {
+    try {
+      if (!this.enableTrails) return;
+      
+      // Create small trail droplet
+      const trailSize = this.trailDropSize[0] + Math.random() * (this.trailDropSize[1] - this.trailDropSize[0]);
+      const trailRadius = Math.max(0.5, parentDrop.r * trailSize); // Ensure minimum radius
+      
+      // Position along the trail path
+      const t = Math.random();
+      const x = prevX + (parentDrop.x - prevX) * t;
+      const y = prevY + (parentDrop.y - prevY) * t;
+      
+      // Add some spread
+      const spreadX = (Math.random() - 0.5) * this.trailSpread * 2;
+      const spreadY = (Math.random() - 0.5) * this.trailSpread * 2;
+      
+      this.drops.push({
+        x: x + spreadX,
+        y: y + spreadY,
+        r: trailRadius,
+        vx: parentDrop.vx * 0.5 + (Math.random() - 0.5) * 0.2,
+        vy: parentDrop.vy * 0.5 + (Math.random() - 0.5) * 0.2,
+        stretch: 1,
+        stick: this.adhesionBase + Math.random() * 0.06,
+        label: false,
+        shapePoints: null,
+        _shapeDirty: false,
+        mass: trailRadius * trailRadius,
+        prevX: x + spreadX,
+        prevY: y + spreadY,
+        adhesion: this.adhesionBase,
+        _trailAccumulated: 0,
+        _isTrailDroplet: true // Mark as trail droplet
+      });
+    } catch (error) {
+      console.warn('Error in spawnTrailDroplet:', error);
     }
   }
 
@@ -683,6 +768,29 @@ class RainOnGlass {
       // Update position
       d.x += d.vx * dtScale;
       d.y += d.vy * dtScale;
+      
+      // Advanced physics: evaporation and shrinking (inspired by RaindropFX)
+      if (d._isTrailDroplet) {
+        // Trail droplets evaporate faster
+        d.r = Math.max(0, d.r - this.evaporate * dtScale * 0.1);
+        if (d.r <= 0.5) {
+          d._dead = true;
+        }
+      } else {
+        // Regular droplets shrink slowly
+        d.r = Math.max(0, d.r - this.shrinkRate * dtScale);
+        if (d.r <= 1) {
+          d._dead = true;
+        }
+      }
+      
+      // Velocity-based spread (inspired by RaindropFX)
+      const dropSpeed = Math.hypot(d.vx, d.vy);
+      if (dropSpeed > 5 && d.r > 0) {
+        d.stretch = 1 + Math.min(dropSpeed / (10 * d.r), 1.1) * this.velocitySpread;
+      } else {
+        d.stretch = 1;
+      }
       
       // Lay trail if drop moved significantly
       if (Math.abs(d.x - prevX) > 0.5 || Math.abs(d.y - prevY) > 0.5) {
@@ -894,10 +1002,15 @@ class RainOnGlass {
 
     // draw droplets with refraction
     for (const d of this.drops) {
+      // Skip droplets with invalid radius (prevent createRadialGradient errors)
+      if (!d.r || d.r <= 0 || !isFinite(d.r)) {
+        continue;
+      }
+      
       const x = d.x / this.dpr;
       const y = d.y / this.dpr;
-      const rx = (d.r * 0.92) / this.dpr;
-      const ry = (d.r * 0.92 * d.stretch) / this.dpr;
+      const rx = Math.max(0.1, (d.r * 0.92) / this.dpr); // Ensure minimum radius
+      const ry = Math.max(0.1, (d.r * 0.92 * d.stretch) / this.dpr); // Ensure minimum radius
 
       ctx.save();
       ctx.beginPath();
@@ -956,16 +1069,17 @@ class RainOnGlass {
       }
       ctx.clip();
       
-      // Draw refracted background inside droplet
-      if (this.hasBackground && this.bgSharp.width > 0 && this.bgSharp.height > 0) {
-        // Refraction parameters
-        const baseOffsetX = rx * 0.22;
-        const baseOffsetY = -ry * 0.12;
-        const baseMag = 1.06;
-        const boost = (this.useMiniRefraction && this.miniBoost) ? this.miniOffsetScale : 1;
-        const offsetX = baseOffsetX * boost;   // boosted horizontal refraction offset
-        const offsetY = baseOffsetY * boost;   // boosted vertical refraction offset
-        const mag = (this.useMiniRefraction && this.miniBoost) ? this.miniMagnification : baseMag; // boosted magnification
+      // Draw refracted background inside droplet (skip for very small drops for performance)
+      if (this.hasBackground && this.bgSharp.width > 0 && this.bgSharp.height > 0 && rx > 2) {
+        // Optimized refraction parameters for realistic water droplets
+        const sizeFactor = Math.min(1, rx / 8); // Scale effect by droplet size
+        const baseOffsetX = rx * this.refractBase * 0.3 * sizeFactor;  // Reduced horizontal distortion
+        const baseOffsetY = -ry * (this.refractBase * 0.2) * sizeFactor; // Reduced vertical distortion
+        const baseMag = 1.01 + (0.01 * sizeFactor);  // More realistic magnification, scaled by size
+        const boost = (this.useMiniRefraction && this.miniBoost) ? this.miniOffsetScale * 0.5 * sizeFactor : 1; // Reduced boost
+        const offsetX = baseOffsetX * boost * this.refractScale;   // More subtle horizontal refraction
+        const offsetY = baseOffsetY * boost * this.refractScale;   // More subtle vertical refraction
+        const mag = (this.useMiniRefraction && this.miniBoost) ? Math.min(1.02, this.miniMagnification * 0.5 * sizeFactor) : baseMag; // Capped magnification
         
         // Calculate source rectangle with refraction offset
         let sx, sy, sw, sh, srcCanvas;
@@ -1081,18 +1195,23 @@ class RainOnGlass {
         const y = c.y / this.dpr;
         const r = c.r / this.dpr;
         
-        // Sparkle effect based on twinkle animation
-        const sparkleIntensity = 0.3 + 0.7 * Math.abs(Math.sin(c.twinkle));
+        // Enhanced sparkle effect like the reference implementation
+        const sparkleIntensity = 0.4 + 0.6 * Math.abs(Math.sin(c.twinkle));
         const alpha = c.life * sparkleIntensity * c.sparkle;
         
-        // Create sparkling highlight
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        // Create more visible sparkling highlight
+        ctx.globalAlpha = alpha * 0.8;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, Math.PI * 2);
         ctx.fill();
         
-        // Add a tiny bright center for extra sparkle
+        // Add bright center sparkle for micro-condensation effect
+        ctx.globalAlpha = alpha * 1.2;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 1.2})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.3, 0, Math.PI * 2);
+        ctx.fill();
         if (alpha > 0.5) {
           ctx.globalAlpha = alpha * 0.8;
           ctx.fillStyle = 'rgba(255, 255, 255, 1)';

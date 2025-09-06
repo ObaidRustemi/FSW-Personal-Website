@@ -36,6 +36,13 @@
   <div id="rainControls" style="position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 10px; font-family: Arial, sans-serif; min-width: 250px; z-index: 1000;">
     <h3 style="margin: 0 0 15px 0; color: #4dff87;">🌧️ Rain Controls</h3>
     
+    <!-- Play/Pause Button -->
+    <div style="margin-bottom: 20px; text-align: center;">
+      <button id="playPauseBtn" style="background: #4dff87; color: black; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 14px;">
+        ⏸️ Pause Rain
+      </button>
+    </div>
+    
     <!-- Rain Amount -->
     <div style="margin-bottom: 15px;">
       <label style="display: block; margin-bottom: 5px; font-size: 14px;">Rain Amount:</label>
@@ -76,6 +83,39 @@
       <label style="display: block; margin-bottom: 5px; font-size: 14px;">Blur Quality:</label>
       <input type="range" id="blurQuality" min="1" max="8" step="1" value="4" style="width: 100%;">
       <span id="blurQualityValue" style="font-size: 12px; color: #ccc;">4 passes</span>
+    </div>
+    
+    <!-- Advanced Physics -->
+    <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 15px;">
+      <h4 style="margin: 0 0 10px 0; color: #4dff87; font-size: 14px;">🔬 Advanced Physics</h4>
+      
+      <!-- Trail Density -->
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 3px; font-size: 12px;">Trail Density:</label>
+        <input type="range" id="trailDensity" min="0" max="0.5" step="0.05" value="0.2" style="width: 100%;">
+        <span id="trailDensityValue" style="font-size: 11px; color: #ccc;">0.2</span>
+      </div>
+      
+      <!-- Evaporation Rate -->
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 3px; font-size: 12px;">Evaporation:</label>
+        <input type="range" id="evaporate" min="0" max="50" step="5" value="10" style="width: 100%;">
+        <span id="evaporateValue" style="font-size: 11px; color: #ccc;">10</span>
+      </div>
+      
+      <!-- Refraction Base -->
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 3px; font-size: 12px;">Refraction Base:</label>
+        <input type="range" id="refractBase" min="0.1" max="1.0" step="0.1" value="0.4" style="width: 100%;">
+        <span id="refractBaseValue" style="font-size: 11px; color: #ccc;">0.4</span>
+      </div>
+      
+      <!-- Refraction Scale -->
+      <div style="margin-bottom: 10px;">
+        <label style="display: block; margin-bottom: 3px; font-size: 12px;">Refraction Scale:</label>
+        <input type="range" id="refractScale" min="0.1" max="1.0" step="0.1" value="0.6" style="width: 100%;">
+        <span id="refractScaleValue" style="font-size: 11px; color: #ccc;">0.6</span>
+      </div>
     </div>
     
     <!-- Preset Buttons -->
@@ -133,9 +173,9 @@
         useMiniRefraction: true,
         miniBoost: true,
         condensation: true,
-        condensationDensity: 0.2, // Reduced from 0.4
-        condensationSize: 0.6,    // Reduced from 0.8
-        condensationSparkle: 0.5, // Reduced from 0.7
+        condensationDensity: 0.8, // Increased for dense coverage like reference
+        condensationSize: 1.2,    // Larger micro-droplets
+        condensationSparkle: 0.9, // More sparkle
         // Enhanced realistic physics
         enableTrails: true,
         dragCoeff: 0.8,
@@ -149,39 +189,55 @@
       rain.start();
       window.__demo = rain;
       
-      // Add debug functions to window for testing
-      window.testRain = {
-        getDropCount: () => rain.drops.length,
-        getCondensationCount: () => rain.condensation.length,
-        addDrop: (x, y, r) => rain.spawn(x, y, r),
-        clearDrops: () => { rain.drops = []; rain.condensation = []; },
-        restart: async () => {
-          rain.stop();
-          await rain.captureBackground();
-          rain.start();
-        },
-        logState: () => {
-          console.log('Rain State:', {
-            drops: rain.drops.length,
-            condensation: rain.condensation.length,
-            running: rain.running,
-            hasBackground: rain.hasBackground,
-            enableTrails: rain.enableTrails,
-            enableCondensation: rain.enableCondensation
-          });
-        }
-      };
+             // Add debug functions to window for testing
+             window.testRain = {
+               getDropCount: () => rain.drops.length,
+               getCondensationCount: () => rain.condensation.length,
+               addDrop: (x, y, r) => rain.spawn(x, y, r),
+               clearDrops: () => { rain.drops = []; rain.condensation = []; },
+               restart: async () => {
+                 rain.stop();
+                 await rain.captureBackground();
+                 rain.start();
+               },
+               play: () => rain.resume(),
+               pause: () => rain.pause(),
+               toggle: () => {
+                 if (rain.running) {
+                   rain.pause();
+                   console.log('Rain paused (frozen in place)');
+                 } else {
+                   rain.resume();
+                   console.log('Rain resumed');
+                 }
+               },
+               logState: () => {
+                 console.log('Rain State:', {
+                   drops: rain.drops.length,
+                   condensation: rain.condensation.length,
+                   running: rain.running,
+                   hasBackground: rain.hasBackground,
+                   enableTrails: rain.enableTrails,
+                   enableCondensation: rain.enableCondensation
+                 });
+               }
+             };
       
       console.log('Rain demo initialized. Use window.testRain for debugging.');
       
       // Rain Control Panel Functionality
       const controls = {
+        playPauseBtn: document.getElementById('playPauseBtn'),
         rainAmount: document.getElementById('rainAmount'),
         rainSpeed: document.getElementById('rainSpeed'),
         sizeVariance: document.getElementById('sizeVariance'),
         windEffect: document.getElementById('windEffect'),
         trailIntensity: document.getElementById('trailIntensity'),
         blurQuality: document.getElementById('blurQuality'),
+        trailDensity: document.getElementById('trailDensity'),
+        evaporate: document.getElementById('evaporate'),
+        refractBase: document.getElementById('refractBase'),
+        refractScale: document.getElementById('refractScale'),
         enableTrails: document.getElementById('enableTrails'),
         enableCondensation: document.getElementById('enableCondensation'),
         enableCollisions: document.getElementById('enableCollisions'),
@@ -196,7 +252,11 @@
         sizeVariance: document.getElementById('sizeVarianceValue'),
         windEffect: document.getElementById('windEffectValue'),
         trailIntensity: document.getElementById('trailIntensityValue'),
-        blurQuality: document.getElementById('blurQualityValue')
+        blurQuality: document.getElementById('blurQualityValue'),
+        trailDensity: document.getElementById('trailDensityValue'),
+        evaporate: document.getElementById('evaporateValue'),
+        refractBase: document.getElementById('refractBaseValue'),
+        refractScale: document.getElementById('refractScaleValue')
       };
       
       // Update value displays
@@ -213,6 +273,14 @@
           display.textContent = control.value;
         } else if (control.id === 'blurQuality') {
           display.textContent = `${control.value} passes`;
+        } else if (control.id === 'trailDensity') {
+          display.textContent = control.value;
+        } else if (control.id === 'evaporate') {
+          display.textContent = control.value;
+        } else if (control.id === 'refractBase') {
+          display.textContent = control.value;
+        } else if (control.id === 'refractScale') {
+          display.textContent = control.value;
         }
       }
       
@@ -236,6 +304,12 @@
         // Update blur quality
         rain.blurIterations = parseInt(controls.blurQuality.value);
         
+        // Update advanced physics parameters
+        rain.trailDropDensity = parseFloat(controls.trailDensity.value);
+        rain.evaporate = parseFloat(controls.evaporate.value);
+        rain.refractBase = parseFloat(controls.refractBase.value);
+        rain.refractScale = parseFloat(controls.refractScale.value);
+        
         // Update feature toggles
         rain.enableTrails = controls.enableTrails.checked;
         rain.enableCondensation = controls.enableCondensation.checked;
@@ -254,7 +328,18 @@
           control.addEventListener('change', applyControls);
         } else if (control.tagName === 'BUTTON') {
           control.addEventListener('click', () => {
-            if (key === 'lightRain') {
+            if (key === 'playPauseBtn') {
+              // Toggle play/pause
+              if (rain.running) {
+                rain.pause();
+                control.innerHTML = '▶️ Play Rain';
+                control.style.background = '#ff6b6b';
+              } else {
+                rain.resume();
+                control.innerHTML = '⏸️ Pause Rain';
+                control.style.background = '#4dff87';
+              }
+            } else if (key === 'lightRain') {
               controls.rainAmount.value = 80;
               controls.rainSpeed.value = 0.3;
               controls.sizeVariance.value = 0.8;

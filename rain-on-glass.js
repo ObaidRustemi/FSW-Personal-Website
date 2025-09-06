@@ -13,6 +13,7 @@ class RainOnGlass {
     this.dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
     this.drops = [];
     this.micro = [];
+    this.condensation = []; // Fine condensation droplets for sparkling effect
     this.running = false;
     this.last = 0;
     this.hasBackground = false;
@@ -26,6 +27,10 @@ class RainOnGlass {
     this.bgMini = document.createElement('canvas');
     this.bgMiniCtx = this.bgMini.getContext('2d');
     this.miniInverted = true; // 180° inverted by default
+    
+    // trail buffer for condensation trails and water film
+    this.trailBuffer = document.createElement('canvas');
+    this.trailCtx = this.trailBuffer.getContext('2d');
 
     const q = urlParams;
 
@@ -47,6 +52,21 @@ class RainOnGlass {
     // trails configuration
     this.enableSmudgeTrail = (q.get('smudge') ?? options.smudge ?? '1') !== '0';
     this.trailThresholdPx = Number(q.get('trailStep')) || options.trailStep || 50; // distance to leave smudge
+    
+    // condensation configuration
+    this.enableCondensation = (q.get('condensation') ?? options.condensation ?? '1') !== '0';
+    this.condensationDensity = Number(q.get('condDensity')) || options.condensationDensity || 0.3; // 0-1
+    this.condensationSize = Number(q.get('condSize')) || options.condensationSize || 0.8; // multiplier for tiny droplets
+    this.condensationSparkle = Number(q.get('condSparkle')) || options.condensationSparkle || 0.6; // 0-1 sparkle intensity
+    
+    // enhanced physics configuration
+    this.enableTrails = (q.get('trails') ?? options.enableTrails ?? '1') !== '0';
+    this.dragCoeff = Number(q.get('drag')) || options.dragCoeff || 0.8; // drag coefficient
+    this.windX = Number(q.get('windX')) || options.windX || 0; // wind force X
+    this.windY = Number(q.get('windY')) || options.windY || 0; // wind force Y
+    this.adhesionBase = Number(q.get('adhesion')) || options.adhesionBase || 0.92; // base adhesion (stickiness)
+    this.slideThreshold = Number(q.get('slideThreshold')) || options.slideThreshold || 8; // radius threshold for sliding
+    this.terminalVelocity = Number(q.get('terminalVel')) || options.terminalVelocity || 15; // max fall speed
 
     // standalone/demo configuration
     this.standalone = Boolean(options.standalone);
@@ -183,6 +203,8 @@ class RainOnGlass {
       const h = Math.ceil(rect.height * this.dpr);
       this.bgSharp.width = this.bgBlur.width = w;
       this.bgSharp.height = this.bgBlur.height = h;
+      this.trailBuffer.width = w;
+      this.trailBuffer.height = h;
       this.bgMini.width = Math.max(1, Math.floor(w / 2));
       this.bgMini.height = Math.max(1, Math.floor(h / 2));
 
@@ -427,58 +449,141 @@ class RainOnGlass {
       vx: (Math.random() - 0.5) * 0.3,
       vy: 0,
       stretch: 1,
-      stick: 0.92 + Math.random() * 0.06,
+      stick: this.adhesionBase + Math.random() * 0.06,
       label: (urlParams.get('debugRain') === '1') && Math.random() < 0.2,
       shapePoints: null,
-      _shapeDirty: false
+      _shapeDirty: false,
+      // Enhanced physics properties
+      mass: radius * radius, // mass ∝ r²
+      prevX: spawnX,
+      prevY: y ?? (-radius - Math.random() * 100 * this.dpr),
+      adhesion: this.adhesionBase,
+      _trailAccumulated: 0
     });
   }
 
+  spawnCondensation() {
+    if (!this.enableCondensation || this.condensation.length >= 2000) return;
+    
+    // Spawn tiny condensation droplets across the surface
+    const count = Math.floor(this.condensationDensity * 20 * Math.random()); // Reduced from 50
+    for (let i = 0; i < count; i++) {
+      const x = Math.random() * this.canvas.width;
+      const y = Math.random() * this.canvas.height;
+      const size = (0.5 + Math.random() * 1.5) * this.condensationSize * this.dpr;
+      
+      this.condensation.push({
+        x: x,
+        y: y,
+        r: size,
+        sparkle: Math.random() * this.condensationSparkle,
+        life: 0.8 + Math.random() * 0.4, // 0.8-1.2
+        age: 0,
+        twinkle: Math.random() * Math.PI * 2 // for sparkle animation
+      });
+    }
+  }
+
+  layTrail(drop, prevX, prevY) {
+    try {
+      if (!this.enableTrails || !this.trailCtx) return;
+      
+      const w = Math.max(1, drop.r * 0.6); // trail width ≈ smaller than drop
+      const alpha = Math.min(0.35, 0.08 + drop.r * 0.01);
+      
+      this.trailCtx.save();
+      this.trailCtx.strokeStyle = `rgba(255,255,255,${alpha})`; // white in thickness-space
+      this.trailCtx.lineWidth = w;
+      this.trailCtx.lineCap = 'round';
+      this.trailCtx.globalCompositeOperation = 'lighter'; // accumulate thickness
+      this.trailCtx.beginPath();
+      this.trailCtx.moveTo(prevX, prevY);
+      this.trailCtx.lineTo(drop.x, drop.y);
+      this.trailCtx.stroke();
+      this.trailCtx.restore();
+    } catch (error) {
+      console.warn('Error in layTrail:', error);
+    }
+  }
+
+  evolveTrails() {
+    try {
+      if (!this.enableTrails || !this.trailCtx) return;
+      
+      // Evaporate: darken alpha a tiny bit
+      this.trailCtx.save();
+      this.trailCtx.globalCompositeOperation = 'destination-out';
+      this.trailCtx.fillStyle = 'rgba(0,0,0,0.01)'; // 1% per frame at 60fps ≈ 1.0s half-life
+      this.trailCtx.fillRect(0, 0, this.trailBuffer.width, this.trailBuffer.height);
+      this.trailCtx.restore();
+
+      // Diffuse: soft blur to widen rivulets
+      this.trailCtx.save();
+      this.trailCtx.filter = 'blur(1.2px)'; // tiny blur
+      const tmp = this.trailCtx.getImageData(0, 0, this.trailBuffer.width, this.trailBuffer.height);
+      this.trailCtx.clearRect(0, 0, this.trailBuffer.width, this.trailBuffer.height);
+      this.trailCtx.putImageData(tmp, 0, 0);
+      this.trailCtx.restore();
+    } catch (error) {
+      console.warn('Error in evolveTrails:', error);
+    }
+  }
+
   update(dt) {
-    const g = this.gravityBase;
-    for (let i = this.drops.length - 1; i >= 0; i--) {
-      const d = this.drops[i];
-      // gravity vector based on angle
-      // Note: positions and radii are in device pixels, so we need to scale gravity appropriately
+    try {
+      const g = this.gravityBase;
+      for (let i = this.drops.length - 1; i >= 0; i--) {
+        const d = this.drops[i];
+        
+        // Validate drop data
+        if (!d || typeof d.x !== 'number' || typeof d.y !== 'number' || typeof d.r !== 'number') {
+          console.warn('Invalid drop data at index', i, d);
+          this.drops.splice(i, 1);
+          continue;
+        }
+      
+      // Store previous position for trail rendering
+      const prevX = d.x;
+      const prevY = d.y;
+      
+      // Simplified but effective physics - back to working system
       const strength = g * (d.r / 18);  // Base gravity proportional to size
       const dtScale = Math.max(0.016, Math.min(0.1, dt)) * this.fps / 1.0; // normalize to configured fps
       
       // Apply gravity in device pixel space
       d.vx += Math.cos(this.gravityAngleRad) * strength * dtScale * this.dpr;
       d.vy += Math.sin(this.gravityAngleRad) * strength * dtScale * this.dpr;
+      
+      // Add wind effect
+      d.vx += this.windX * dtScale;
+      d.vy += this.windY * dtScale;
+      
       // variance (wind jitter)
       if (this.gravityVariance) d.vx += (Math.random() * 2 - 1) * this.gravityVariance * dtScale * 0.1;
+      
+      // Apply drag and adhesion
       const vyDamp = Math.pow(d.stick, dtScale);
       d.vy *= vyDamp;
       d.vx *= Math.pow(0.985, dtScale);
-      // Non-linear gravity phases (stick/slow/skip)
-      if (d.r > this.gravityThreshold) {
-        if (d.collided) {
-          d.collided = false;
-          d.seed = Math.floor(d.r * Math.random() * this.fps);
-          d.skipping = false; d.slowing = false;
-        } else if (!d.seed || d.seed < 0) {
-          d.seed = Math.floor(d.r * Math.random() * this.fps);
-          d.skipping = d.skipping === false; // toggle
-          d.slowing = true;
-        }
-        d.seed--;
-        if (d.slowing) {
-          d.vy /= (1 + 0.1 * dtScale * 0.06);
-          d.vx /= (1 + 0.1 * dtScale * 0.06);
-          if (Math.abs(d.vy) < strength * 0.2) d.slowing = false;
-        } else if (d.skipping) {
-          d.vy = Math.sin(this.gravityAngleRad) * strength * 0.8;
-          d.vx = Math.cos(this.gravityAngleRad) * strength * 0.4;
-        }
+      
+      // Update position
+      d.x += d.vx * dtScale;
+      d.y += d.vy * dtScale;
+      
+      // Lay trail if drop moved significantly
+      if (Math.abs(d.x - prevX) > 0.5 || Math.abs(d.y - prevY) > 0.5) {
+        this.layTrail(d, prevX, prevY);
       }
+      
+      // Update previous position
+      d.prevX = prevX;
+      d.prevY = prevY;
       const alongGravity = d.vx * Math.cos(this.gravityAngleRad) + d.vy * Math.sin(this.gravityAngleRad);
       d.stretch = 1 + Math.min(alongGravity / (10 * d.r), 1.1);
       // mark shape dirty when speed low or very low acceleration
       const speed = Math.hypot(d.vx, d.vy);
       d._shapeDirty = speed < 1.5 * this.dpr;
-      d.x += d.vx * dtScale;
-      d.y += d.vy * dtScale;
+      // Position already updated in the new physics system above
       
       // remove only when fully off-screen; allow reach to bottom
       if (d.y - d.r > this.canvas.height + 5) this.drops.splice(i, 1);
@@ -567,8 +672,38 @@ class RainOnGlass {
     }
     }
 
+    // Update condensation droplets
+    if (this.enableCondensation) {
+      for (let i = this.condensation.length - 1; i >= 0; i--) {
+        const c = this.condensation[i];
+        c.age += dt;
+        c.twinkle += dt * 3; // sparkle animation
+        
+        // Fade out over time
+        c.life -= dt * 0.1;
+        if (c.life <= 0) {
+          this.condensation.splice(i, 1);
+        }
+      }
+      
+      // Spawn new condensation occasionally
+      if (Math.random() < 0.01) { // 1% chance per frame (reduced from 2%)
+        this.spawnCondensation();
+      }
+    }
+
+    // Evolve trails (evaporation and diffusion)
+    this.evolveTrails();
+
     // keep population (preset-based spawn)
     this.spawnFromPresets(dt);
+    
+    } catch (error) {
+      console.error('Error in RainOnGlass.update():', error);
+      console.error('Stack trace:', error.stack);
+      // Try to recover by clearing problematic drops
+      this.drops = this.drops.filter(d => d && typeof d.x === 'number' && typeof d.y === 'number' && typeof d.r === 'number');
+    }
   }
 
   spawnFromPresets(dt) {
@@ -624,10 +759,11 @@ class RainOnGlass {
   }
 
   render() {
-    const ctx = this.ctx;
-    this.clear();
-    // Draw in CSS pixel coordinates; scale context to DPR
-    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    try {
+      const ctx = this.ctx;
+      this.clear();
+      // Draw in CSS pixel coordinates; scale context to DPR
+      ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
     // Atmospheric fog overlay (subtle vertical gradient)
     if (!TEST_MODE && this.fogEnabled && this.fogStrength > 0) {
@@ -813,23 +949,87 @@ class RainOnGlass {
         ctx.restore();
       }
     }
+
+    // Render trail effects (fog/condensation from water film)
+    if (this.enableTrails) {
+      ctx.save();
+      ctx.globalAlpha = 0.25; // subtle fog
+      ctx.globalCompositeOperation = 'screen'; // brighten/blend
+      ctx.drawImage(this.trailBuffer, 0, 0, this.canvas.width / this.dpr, this.canvas.height / this.dpr);
+      ctx.restore();
+    }
+
+    // Render condensation droplets (tiny sparkling points)
+    if (this.enableCondensation && this.condensation.length > 0) {
+      ctx.save();
+      for (const c of this.condensation) {
+        const x = c.x / this.dpr;
+        const y = c.y / this.dpr;
+        const r = c.r / this.dpr;
+        
+        // Sparkle effect based on twinkle animation
+        const sparkleIntensity = 0.3 + 0.7 * Math.abs(Math.sin(c.twinkle));
+        const alpha = c.life * sparkleIntensity * c.sparkle;
+        
+        // Create sparkling highlight
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add a tiny bright center for extra sparkle
+        if (alpha > 0.5) {
+          ctx.globalAlpha = alpha * 0.8;
+          ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+          ctx.beginPath();
+          ctx.arc(x, y, r * 0.3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+    
+    } catch (error) {
+      console.error('Error in RainOnGlass.render():', error);
+      console.error('Stack trace:', error.stack);
+      // Try to clear and restart rendering
+      this.clear();
+    }
   }
 
   loop(t) {
-    if (!this.running) return;
-    // Frame pacing: clamp dt and skip update when tab is throttled to reduce CPU
-    const dtRaw = (t - this.last) / 1000;
-    const dt = Math.min(Math.max(0, dtRaw), 0.08);
-    this.last = t;
-    // simple dynamic drop cap based on frame delta (coarse scaler)
-    const budgetScale = dt > 0.03 ? 0.85 : 1.0;
-    if (budgetScale < 1 && this.drops.length > 0) {
-      const keep = Math.max(15, Math.floor(this.drops.length * budgetScale));
-      if (keep < this.drops.length) this.drops.length = keep;
+    try {
+      if (!this.running) return;
+      
+      // Frame pacing: clamp dt and skip update when tab is throttled to reduce CPU
+      const dtRaw = (t - this.last) / 1000;
+      const dt = Math.min(Math.max(0, dtRaw), 0.08);
+      this.last = t;
+      
+      // Debug logging every 60 frames (about once per second at 60fps)
+      if (Math.floor(t / 1000) !== this._lastDebugSecond) {
+        this._lastDebugSecond = Math.floor(t / 1000);
+        console.log(`RainOnGlass Debug - Drops: ${this.drops.length}, Condensation: ${this.condensation.length}, dt: ${dt.toFixed(3)}`);
+      }
+      
+      // simple dynamic drop cap based on frame delta (coarse scaler)
+      const budgetScale = dt > 0.03 ? 0.85 : 1.0;
+      if (budgetScale < 1 && this.drops.length > 0) {
+        const keep = Math.max(15, Math.floor(this.drops.length * budgetScale));
+        if (keep < this.drops.length) this.drops.length = keep;
+      }
+      
+      this.update(dt);
+      this.render();
+      requestAnimationFrame(this.loop);
+      
+    } catch (error) {
+      console.error('Error in RainOnGlass.loop():', error);
+      console.error('Stack trace:', error.stack);
+      // Stop the animation loop to prevent infinite error spam
+      this.running = false;
     }
-    this.update(dt);
-    this.render();
-    requestAnimationFrame(this.loop);
   }
 }
 

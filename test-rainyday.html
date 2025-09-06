@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RainyDay.js Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        canvas {
+            border: 2px solid #444;
+            background: #333;
+            margin: 20px 0;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .success {
+            background: #1b5e20;
+            color: #a5d6a7;
+        }
+        
+        .error {
+            background: #b71c1c;
+            color: #ffcdd2;
+        }
+        
+        .info {
+            background: #1565c0;
+            color: #bbdefb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>RainyDay.js Library Test</h1>
+        
+        <div id="libraryStatus" class="status info">Loading RainyDay.js...</div>
+        
+        <canvas id="testCanvas" width="400" height="300"></canvas>
+        
+        <div id="testStatus" class="status info">Testing RainyDay.js functionality...</div>
+        
+        <button onclick="testRainyDay()">Test RainyDay.js</button>
+    </div>
+
+    <!-- Load RainyDay.js -->
+    <script src="vendor/rainyday.js/src/rainyday.js"></script>
+    
+    <script>
+        // Test RainyDay.js loading
+        document.addEventListener('DOMContentLoaded', () => {
+            const libraryStatus = document.getElementById('libraryStatus');
+            
+            if (typeof RainyDay === 'undefined') {
+                libraryStatus.textContent = '❌ RainyDay.js failed to load';
+                libraryStatus.className = 'status error';
+            } else {
+                libraryStatus.textContent = '✅ RainyDay.js loaded successfully';
+                libraryStatus.className = 'status success';
+            }
+        });
+        
+        async function testRainyDay() {
+            const testStatus = document.getElementById('testStatus');
+            const canvas = document.getElementById('testCanvas');
+            
+            try {
+                if (typeof RainyDay === 'undefined') {
+                    throw new Error('RainyDay.js not loaded');
+                }
+                
+                testStatus.textContent = 'Loading Miami bridge image...';
+                testStatus.className = 'status info';
+                
+                // Create a proper IMG element for RainyDay.js with Miami bridge image
+                const img = document.createElement('img');
+                img.crossOrigin = 'anonymous';
+                img.src = 'https://images.unsplash.com/photo-1515163988842-60ece4c9a5bb?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8bmV3JTIweW9yayUyMG5pZ2h0fGVufDB8fDB8fHww';
+                
+                // Wait for image to load
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                });
+                
+                // Resize canvas to match image aspect ratio
+                const aspectRatio = img.naturalWidth / img.naturalHeight;
+                const canvasHeight = 400;
+                const canvasWidth = canvasHeight * aspectRatio;
+                
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+                
+                // Draw the background image
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+                
+                testStatus.textContent = 'Creating RainyDay instance...';
+                
+                // Create RainyDay instance with Miami bridge image
+                const rainyDay = new RainyDay({
+                    image: img, // Miami bridge image
+                    fps: 24,
+                    blur: 12, // Increased blur for better glass effect
+                    enableCollisions: true,
+                    gravityAngleVariance: 0.02
+                });
+                
+                testStatus.textContent = 'Starting rain effect...';
+                
+                // Start rain with presets optimized for the Miami image
+                rainyDay.rain([
+                    [3, 6, 0.8, 50],  // Small drops - more frequent
+                    [6, 10, 0.6, 50], // Medium drops
+                    [10, 15, 0.3, 50] // Large drops - less frequent
+                ], 50);
+                
+                testStatus.textContent = '✅ RainyDay.js test successful! Miami bridge rain effect started';
+                testStatus.className = 'status success';
+                
+                // Stop after 10 seconds to enjoy the effect
+                setTimeout(() => {
+                    rainyDay.clear();
+                    testStatus.textContent = 'Test completed. Rain stopped.';
+                    testStatus.className = 'status info';
+                }, 10000);
+                
+            } catch (error) {
+                testStatus.textContent = '❌ RainyDay.js test failed: ' + error.message;
+                testStatus.className = 'status error';
+                console.error('RainyDay test error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

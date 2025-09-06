@@ -61,11 +61,48 @@
         fps: 60,
         maxDrops: 180,
         useMiniRefraction: true,
-        miniBoost: true
+        miniBoost: true,
+        condensation: true,
+        condensationDensity: 0.2, // Reduced from 0.4
+        condensationSize: 0.6,    // Reduced from 0.8
+        condensationSparkle: 0.5, // Reduced from 0.7
+        // Enhanced realistic physics
+        enableTrails: true,
+        dragCoeff: 0.8,
+        windX: 0.1,  // Reduced wind
+        windY: 0,
+        adhesionBase: 0.95, // Increased stickiness
+        slideThreshold: 8,
+        terminalVelocity: 15
       });
       await rain.captureBackground();
       rain.start();
       window.__demo = rain;
+      
+      // Add debug functions to window for testing
+      window.testRain = {
+        getDropCount: () => rain.drops.length,
+        getCondensationCount: () => rain.condensation.length,
+        addDrop: (x, y, r) => rain.spawn(x, y, r),
+        clearDrops: () => { rain.drops = []; rain.condensation = []; },
+        restart: async () => {
+          rain.stop();
+          await rain.captureBackground();
+          rain.start();
+        },
+        logState: () => {
+          console.log('Rain State:', {
+            drops: rain.drops.length,
+            condensation: rain.condensation.length,
+            running: rain.running,
+            hasBackground: rain.hasBackground,
+            enableTrails: rain.enableTrails,
+            enableCondensation: rain.enableCondensation
+          });
+        }
+      };
+      
+      console.log('Rain demo initialized. Use window.testRain for debugging.');
     });
   })();
   </script>

@@ -32,6 +32,76 @@
     <canvas id="rainCanvas"></canvas>
   </div>
 
+  <!-- Rain Control Panel -->
+  <div id="rainControls" style="position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 20px; border-radius: 10px; font-family: Arial, sans-serif; min-width: 250px; z-index: 1000;">
+    <h3 style="margin: 0 0 15px 0; color: #4dff87;">🌧️ Rain Controls</h3>
+    
+    <!-- Rain Amount -->
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-size: 14px;">Rain Amount:</label>
+      <input type="range" id="rainAmount" min="0" max="300" value="180" style="width: 100%;">
+      <span id="rainAmountValue" style="font-size: 12px; color: #ccc;">180 drops</span>
+    </div>
+    
+    <!-- Rain Speed -->
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-size: 14px;">Rain Speed:</label>
+      <input type="range" id="rainSpeed" min="0.1" max="1.0" step="0.1" value="0.4" style="width: 100%;">
+      <span id="rainSpeedValue" style="font-size: 12px; color: #ccc;">0.4x</span>
+    </div>
+    
+    <!-- Drop Size Variance -->
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-size: 14px;">Drop Size Variance:</label>
+      <input type="range" id="sizeVariance" min="0.5" max="3.0" step="0.1" value="1.0" style="width: 100%;">
+      <span id="sizeVarianceValue" style="font-size: 12px; color: #ccc;">1.0x</span>
+    </div>
+    
+    <!-- Wind Effect -->
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-size: 14px;">Wind Effect:</label>
+      <input type="range" id="windEffect" min="0" max="0.2" step="0.01" value="0.05" style="width: 100%;">
+      <span id="windEffectValue" style="font-size: 12px; color: #ccc;">0.05</span>
+    </div>
+    
+    <!-- Trail Intensity -->
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-size: 14px;">Trail Intensity:</label>
+      <input type="range" id="trailIntensity" min="0" max="1" step="0.1" value="0.5" style="width: 100%;">
+      <span id="trailIntensityValue" style="font-size: 12px; color: #ccc;">0.5</span>
+    </div>
+    
+    <!-- Blur Quality -->
+    <div style="margin-bottom: 15px;">
+      <label style="display: block; margin-bottom: 5px; font-size: 14px;">Blur Quality:</label>
+      <input type="range" id="blurQuality" min="1" max="8" step="1" value="4" style="width: 100%;">
+      <span id="blurQualityValue" style="font-size: 12px; color: #ccc;">4 passes</span>
+    </div>
+    
+    <!-- Preset Buttons -->
+    <div style="margin-top: 20px;">
+      <button id="lightRain" style="background: #4dff87; color: black; border: none; padding: 8px 12px; margin: 2px; border-radius: 4px; cursor: pointer; font-size: 12px;">Light Rain</button>
+      <button id="heavyRain" style="background: #4dff87; color: black; border: none; padding: 8px 12px; margin: 2px; border-radius: 4px; cursor: pointer; font-size: 12px;">Heavy Rain</button>
+      <button id="storm" style="background: #4dff87; color: black; border: none; padding: 8px 12px; margin: 2px; border-radius: 4px; cursor: pointer; font-size: 12px;">Storm</button>
+    </div>
+    
+    <!-- Toggle Controls -->
+    <div style="margin-top: 15px; border-top: 1px solid #333; padding-top: 15px;">
+      <label style="display: flex; align-items: center; margin-bottom: 10px; font-size: 14px;">
+        <input type="checkbox" id="enableTrails" checked style="margin-right: 8px;">
+        Enable Trails
+      </label>
+      <label style="display: flex; align-items: center; margin-bottom: 10px; font-size: 14px;">
+        <input type="checkbox" id="enableCondensation" checked style="margin-right: 8px;">
+        Enable Condensation
+      </label>
+      <label style="display: flex; align-items: center; font-size: 14px;">
+        <input type="checkbox" id="enableCollisions" checked style="margin-right: 8px;">
+        Enable Collisions
+      </label>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="rain-on-glass.js"></script>
   <script>
@@ -55,7 +125,7 @@
         backgroundSource: '#bgImage',
         blur: 8,
         gravityDeg: 90,
-        gravity: 0.6,
+        gravity: 0.4, // Reduced gravity for slower fall
         collisions: true,
         smudge: true,
         fps: 60,
@@ -69,7 +139,7 @@
         // Enhanced realistic physics
         enableTrails: true,
         dragCoeff: 0.8,
-        windX: 0.1,  // Reduced wind
+        windX: 0.05,  // Even more reduced wind for more vertical trails
         windY: 0,
         adhesionBase: 0.95, // Increased stickiness
         slideThreshold: 8,
@@ -103,6 +173,123 @@
       };
       
       console.log('Rain demo initialized. Use window.testRain for debugging.');
+      
+      // Rain Control Panel Functionality
+      const controls = {
+        rainAmount: document.getElementById('rainAmount'),
+        rainSpeed: document.getElementById('rainSpeed'),
+        sizeVariance: document.getElementById('sizeVariance'),
+        windEffect: document.getElementById('windEffect'),
+        trailIntensity: document.getElementById('trailIntensity'),
+        blurQuality: document.getElementById('blurQuality'),
+        enableTrails: document.getElementById('enableTrails'),
+        enableCondensation: document.getElementById('enableCondensation'),
+        enableCollisions: document.getElementById('enableCollisions'),
+        lightRain: document.getElementById('lightRain'),
+        heavyRain: document.getElementById('heavyRain'),
+        storm: document.getElementById('storm')
+      };
+      
+      const valueDisplays = {
+        rainAmount: document.getElementById('rainAmountValue'),
+        rainSpeed: document.getElementById('rainSpeedValue'),
+        sizeVariance: document.getElementById('sizeVarianceValue'),
+        windEffect: document.getElementById('windEffectValue'),
+        trailIntensity: document.getElementById('trailIntensityValue'),
+        blurQuality: document.getElementById('blurQualityValue')
+      };
+      
+      // Update value displays
+      function updateValueDisplay(control, display) {
+        if (control.id === 'rainAmount') {
+          display.textContent = `${control.value} drops`;
+        } else if (control.id === 'rainSpeed') {
+          display.textContent = `${control.value}x`;
+        } else if (control.id === 'sizeVariance') {
+          display.textContent = `${control.value}x`;
+        } else if (control.id === 'windEffect') {
+          display.textContent = control.value;
+        } else if (control.id === 'trailIntensity') {
+          display.textContent = control.value;
+        } else if (control.id === 'blurQuality') {
+          display.textContent = `${control.value} passes`;
+        }
+      }
+      
+      // Apply control changes
+      function applyControls() {
+        // Update max drops
+        rain.maxDrops = parseInt(controls.rainAmount.value);
+        
+        // Update gravity (speed)
+        rain.gravityBase = 0.4 * parseFloat(controls.rainSpeed.value);
+        
+        // Update size variance (affects spawn radius range)
+        rain.sizeVariance = parseFloat(controls.sizeVariance.value);
+        
+        // Update wind
+        rain.windX = parseFloat(controls.windEffect.value);
+        
+        // Update trail intensity
+        rain.trailIntensity = parseFloat(controls.trailIntensity.value);
+        
+        // Update blur quality
+        rain.blurIterations = parseInt(controls.blurQuality.value);
+        
+        // Update feature toggles
+        rain.enableTrails = controls.enableTrails.checked;
+        rain.enableCondensation = controls.enableCondensation.checked;
+        rain.collisions = controls.enableCollisions.checked;
+      }
+      
+      // Add event listeners
+      Object.keys(controls).forEach(key => {
+        const control = controls[key];
+        if (control.type === 'range') {
+          control.addEventListener('input', () => {
+            updateValueDisplay(control, valueDisplays[key]);
+            applyControls();
+          });
+        } else if (control.type === 'checkbox') {
+          control.addEventListener('change', applyControls);
+        } else if (control.tagName === 'BUTTON') {
+          control.addEventListener('click', () => {
+            if (key === 'lightRain') {
+              controls.rainAmount.value = 80;
+              controls.rainSpeed.value = 0.3;
+              controls.sizeVariance.value = 0.8;
+              controls.windEffect.value = 0.02;
+              controls.trailIntensity.value = 0.3;
+              controls.blurQuality.value = 3;
+            } else if (key === 'heavyRain') {
+              controls.rainAmount.value = 200;
+              controls.rainSpeed.value = 0.6;
+              controls.sizeVariance.value = 1.2;
+              controls.windEffect.value = 0.08;
+              controls.trailIntensity.value = 0.7;
+              controls.blurQuality.value = 5;
+            } else if (key === 'storm') {
+              controls.rainAmount.value = 300;
+              controls.rainSpeed.value = 0.9;
+              controls.sizeVariance.value = 1.5;
+              controls.windEffect.value = 0.15;
+              controls.trailIntensity.value = 0.9;
+              controls.blurQuality.value = 6;
+            }
+            
+            // Update displays and apply
+            Object.keys(valueDisplays).forEach(displayKey => {
+              updateValueDisplay(controls[displayKey], valueDisplays[displayKey]);
+            });
+            applyControls();
+          });
+        }
+      });
+      
+      // Initialize displays
+      Object.keys(valueDisplays).forEach(key => {
+        updateValueDisplay(controls[key], valueDisplays[key]);
+      });
     });
   })();
   </script>

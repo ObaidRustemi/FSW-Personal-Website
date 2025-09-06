@@ -23,6 +23,10 @@ class RainOnGlass {
     this.bgBlur = document.createElement('canvas');
     this.bgSharpCtx = this.bgSharp.getContext('2d');
     this.bgBlurCtx = this.bgBlur.getContext('2d');
+    
+    // Multi-pass blur system (inspired by WebGL implementation)
+    this.blurSteps = []; // Array of canvas buffers for downsampling/upsampling
+    this.blurIterations = 4; // Number of blur passes
     // optional miniature reflection buffer (RainyDay-style)
     this.bgMini = document.createElement('canvas');
     this.bgMiniCtx = this.bgMini.getContext('2d');
@@ -67,6 +71,10 @@ class RainOnGlass {
     this.adhesionBase = Number(q.get('adhesion')) || options.adhesionBase || 0.92; // base adhesion (stickiness)
     this.slideThreshold = Number(q.get('slideThreshold')) || options.slideThreshold || 8; // radius threshold for sliding
     this.terminalVelocity = Number(q.get('terminalVel')) || options.terminalVelocity || 15; // max fall speed
+    
+    // control panel properties
+    this.sizeVariance = Number(q.get('sizeVariance')) || options.sizeVariance || 1.0; // drop size variance multiplier
+    this.trailIntensity = Number(q.get('trailIntensity')) || options.trailIntensity || 0.5; // trail intensity multiplier
 
     // standalone/demo configuration
     this.standalone = Boolean(options.standalone);
@@ -230,10 +238,18 @@ class RainOnGlass {
         if (this.saturation < 1) this.applyDesaturate(this.bgSharpCtx, this.bgSharp.width, this.bgSharp.height, this.saturation);
       }
 
-      // Create blurred buffer deterministically
+      // Create blurred buffer using multi-pass blur system
       this.bgBlurCtx.clearRect(0, 0, this.bgBlur.width, this.bgBlur.height);
       this.bgBlurCtx.drawImage(this.bgSharp, 0, 0);
-      this.applyBoxBlur(this.bgBlurCtx, this.bgBlur.width, this.bgBlur.height, Math.max(0, Math.floor(this.blurPx)));
+      
+      // Use new multi-pass blur for higher quality
+      const blurStrength = Math.max(0, Math.floor(this.blurPx));
+      if (blurStrength > 0) {
+        this.multiPassBlur(this.bgSharp, this.bgBlur, blurStrength);
+      } else {
+        // No blur needed, just copy
+        this.bgBlurCtx.drawImage(this.bgSharp, 0, 0);
+      }
 
       // Create miniature inverted buffer for optional higher-contrast refraction feel
       try {
@@ -437,7 +453,7 @@ class RainOnGlass {
         // Large drops (20%)
         radius = 16 + Math.random() * 10;
       }
-      radius *= this.dpr;
+      radius *= this.dpr * this.sizeVariance; // Apply size variance multiplier
     }
     
     const spawnX = x ?? (radius + Math.random() * (this.canvas.width - 2 * radius));
@@ -460,6 +476,90 @@ class RainOnGlass {
       adhesion: this.adhesionBase,
       _trailAccumulated: 0
     });
+  }
+
+  // Multi-pass blur system (inspired by WebGL BlurRenderer)
+  initBlurSteps(width, height) {
+    // Initialize blur step canvases if needed
+    for (let i = 0; i <= this.blurIterations; i++) {
+      if (!this.blurSteps[i]) {
+        this.blurSteps[i] = document.createElement('canvas');
+        this.blurSteps[i].getContext('2d');
+      }
+      
+      // Calculate size for this step (downsampling)
+      const stepWidth = Math.max(1, Math.floor(width / Math.pow(2, i)));
+      const stepHeight = Math.max(1, Math.floor(height / Math.pow(2, i)));
+      
+      // Resize if needed
+      if (this.blurSteps[i].width !== stepWidth || this.blurSteps[i].height !== stepHeight) {
+        this.blurSteps[i].width = stepWidth;
+        this.blurSteps[i].height = stepHeight;
+      }
+    }
+  }
+
+  downSampleBlur(inputCanvas, iteration) {
+    const ctx = this.blurSteps[iteration].getContext('2d');
+    const inputCtx = inputCanvas.getContext('2d');
+    
+    // Clear the target canvas
+    ctx.clearRect(0, 0, this.blurSteps[iteration].width, this.blurSteps[iteration].height);
+    
+    // Draw input at half size (downsampling)
+    ctx.drawImage(inputCanvas, 0, 0, this.blurSteps[iteration].width, this.blurSteps[iteration].height);
+    
+    // Apply subtle blur for downsampling
+    ctx.filter = 'blur(0.5px)';
+    ctx.drawImage(inputCanvas, 0, 0, this.blurSteps[iteration].width, this.blurSteps[iteration].height);
+    ctx.filter = 'none';
+  }
+
+  upSampleBlur(inputCanvas, iteration, targetWidth, targetHeight) {
+    const ctx = this.blurSteps[iteration].getContext('2d');
+    
+    // Clear the target canvas
+    ctx.clearRect(0, 0, this.blurSteps[iteration].width, this.blurSteps[iteration].height);
+    
+    // Draw input at double size (upsampling)
+    ctx.drawImage(inputCanvas, 0, 0, this.blurSteps[iteration].width, this.blurSteps[iteration].height);
+    
+    // Apply subtle blur for upsampling
+    ctx.filter = 'blur(0.5px)';
+    ctx.drawImage(inputCanvas, 0, 0, this.blurSteps[iteration].width, this.blurSteps[iteration].height);
+    ctx.filter = 'none';
+  }
+
+  multiPassBlur(sourceCanvas, targetCanvas, blurStrength = 1.0) {
+    const sourceCtx = sourceCanvas.getContext('2d');
+    const targetCtx = targetCanvas.getContext('2d');
+    
+    // Initialize blur steps
+    this.initBlurSteps(sourceCanvas.width, sourceCanvas.height);
+    
+    // Step 0: Copy source to first blur step
+    const step0Ctx = this.blurSteps[0].getContext('2d');
+    step0Ctx.clearRect(0, 0, this.blurSteps[0].width, this.blurSteps[0].height);
+    step0Ctx.drawImage(sourceCanvas, 0, 0);
+    
+    // Downsample: progressively reduce size
+    let currentInput = this.blurSteps[0];
+    for (let i = 1; i <= this.blurIterations; i++) {
+      this.downSampleBlur(currentInput, i);
+      currentInput = this.blurSteps[i];
+    }
+    
+    // Upsample: progressively increase size back
+    for (let i = this.blurIterations - 1; i >= 0; i--) {
+      this.upSampleBlur(currentInput, i, this.blurSteps[i].width, this.blurSteps[i].height);
+      currentInput = this.blurSteps[i];
+    }
+    
+    // Final blur pass with configurable strength
+    targetCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+    targetCtx.filter = `blur(${blurStrength}px)`;
+    targetCtx.drawImage(currentInput, 0, 0, targetCanvas.width, targetCanvas.height);
+    targetCtx.filter = 'none';
   }
 
   spawnCondensation() {
@@ -488,17 +588,31 @@ class RainOnGlass {
     try {
       if (!this.enableTrails || !this.trailCtx) return;
       
-      const w = Math.max(1, drop.r * 0.6); // trail width ≈ smaller than drop
-      const alpha = Math.min(0.35, 0.08 + drop.r * 0.01);
+      // More realistic trail parameters
+      const baseWidth = Math.max(0.8, drop.r * 0.4); // Thinner base width
+      const widthVariation = baseWidth * 0.3; // Add natural variation
+      const w = baseWidth + (Math.random() - 0.5) * widthVariation;
+      
+      // More subtle alpha with size-based variation
+      const baseAlpha = Math.min(0.25, 0.05 + drop.r * 0.008);
+      const alphaVariation = baseAlpha * 0.4;
+      const alpha = baseAlpha + (Math.random() - 0.5) * alphaVariation;
+      
+      // Add slight horizontal drift for more natural flow
+      const drift = (Math.random() - 0.5) * 0.5;
+      const midX = (prevX + drop.x) / 2 + drift;
+      const midY = (prevY + drop.y) / 2;
       
       this.trailCtx.save();
-      this.trailCtx.strokeStyle = `rgba(255,255,255,${alpha})`; // white in thickness-space
+      this.trailCtx.strokeStyle = `rgba(255,255,255,${alpha})`;
       this.trailCtx.lineWidth = w;
       this.trailCtx.lineCap = 'round';
-      this.trailCtx.globalCompositeOperation = 'lighter'; // accumulate thickness
+      this.trailCtx.globalCompositeOperation = 'lighter';
+      
+      // Draw curved trail for more natural water flow
       this.trailCtx.beginPath();
       this.trailCtx.moveTo(prevX, prevY);
-      this.trailCtx.lineTo(drop.x, drop.y);
+      this.trailCtx.quadraticCurveTo(midX, midY, drop.x, drop.y);
       this.trailCtx.stroke();
       this.trailCtx.restore();
     } catch (error) {
@@ -510,16 +624,16 @@ class RainOnGlass {
     try {
       if (!this.enableTrails || !this.trailCtx) return;
       
-      // Evaporate: darken alpha a tiny bit
+      // Evaporate: darken alpha a tiny bit (slower evaporation for longer trails)
       this.trailCtx.save();
       this.trailCtx.globalCompositeOperation = 'destination-out';
-      this.trailCtx.fillStyle = 'rgba(0,0,0,0.01)'; // 1% per frame at 60fps ≈ 1.0s half-life
+      this.trailCtx.fillStyle = 'rgba(0,0,0,0.005)'; // Reduced from 0.01 for longer-lasting trails
       this.trailCtx.fillRect(0, 0, this.trailBuffer.width, this.trailBuffer.height);
       this.trailCtx.restore();
-
-      // Diffuse: soft blur to widen rivulets
+      
+      // Diffuse: soft blur to widen rivulets (more subtle blur)
       this.trailCtx.save();
-      this.trailCtx.filter = 'blur(1.2px)'; // tiny blur
+      this.trailCtx.filter = 'blur(0.8px)'; // Reduced blur for more defined trails
       const tmp = this.trailCtx.getImageData(0, 0, this.trailBuffer.width, this.trailBuffer.height);
       this.trailCtx.clearRect(0, 0, this.trailBuffer.width, this.trailBuffer.height);
       this.trailCtx.putImageData(tmp, 0, 0);
@@ -547,7 +661,7 @@ class RainOnGlass {
       const prevY = d.y;
       
       // Simplified but effective physics - back to working system
-      const strength = g * (d.r / 18);  // Base gravity proportional to size
+      const strength = g * (d.r / 25);  // Reduced gravity strength for slower fall
       const dtScale = Math.max(0.016, Math.min(0.1, dt)) * this.fps / 1.0; // normalize to configured fps
       
       // Apply gravity in device pixel space
@@ -953,8 +1067,8 @@ class RainOnGlass {
     // Render trail effects (fog/condensation from water film)
     if (this.enableTrails) {
       ctx.save();
-      ctx.globalAlpha = 0.25; // subtle fog
-      ctx.globalCompositeOperation = 'screen'; // brighten/blend
+      ctx.globalAlpha = 0.15 * this.trailIntensity; // Apply trail intensity multiplier
+      ctx.globalCompositeOperation = 'overlay'; // Changed from 'screen' for more natural blending
       ctx.drawImage(this.trailBuffer, 0, 0, this.canvas.width / this.dpr, this.canvas.height / this.dpr);
       ctx.restore();
     }

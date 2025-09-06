@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raindrip Hybrid - Best of Both Worlds</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* June's Base + Jay's Architecture */
+        .rain-system {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Rich test background */
+        .content-background {
+            position: absolute;
+            inset: 0;
+            background: 
+                linear-gradient(217deg, rgba(255,0,0,.8), rgba(255,0,0,0) 70.71%),
+                linear-gradient(127deg, rgba(0,255,0,.8), rgba(0,255,0,0) 70.71%),
+                linear-gradient(336deg, rgba(0,0,255,.8), rgba(0,0,255,0) 70.71%);
+            display: grid;
+            place-items: center;
+        }
+
+        /* Pattern overlay for detail */
+        .content-background::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                repeating-conic-gradient(from 0deg at 50% 50%, 
+                    transparent 0deg, 
+                    rgba(255,255,255,0.03) 10deg, 
+                    transparent 20deg),
+                repeating-linear-gradient(45deg, 
+                    transparent, 
+                    transparent 20px, 
+                    rgba(255,255,255,0.05) 20px, 
+                    rgba(255,255,255,0.05) 21px);
+        }
+
+        .test-content {
+            position: relative;
+            text-align: center;
+            z-index: 1;
+            padding: 40px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .test-content h1 {
+            font-size: 60px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #fff, #ccc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* JUNE: Main frost layer */
+        .frost-layer {
+            position: absolute;
+            inset: 0;
+            backdrop-filter: blur(10px) saturate(1.1) brightness(1.05);
+            background: 
+                radial-gradient(ellipse at top left, rgba(255,255,255,0.05), transparent),
+                radial-gradient(ellipse at bottom right, rgba(0,0,255,0.02), transparent);
+            z-index: 10;
+        }
+
+        /* JAY: Optimized clear layer */
+        .refraction-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            pointer-events: none;
+            mix-blend-mode: normal;
+        }
+
+        /* HYBRID: The Ultimate Droplet */
+        .droplet-hybrid {
+            position: absolute;
+            pointer-events: auto;
+            cursor: pointer;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            transition: transform 0.1s ease-out;
+        }
+
+        .droplet-hybrid:hover {
+            transform: scale(1.05);
+        }
+
+        /* Main droplet body */
+        .droplet-glass {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            overflow: hidden;
+            
+            /* June's shine trick - multiple gradients! */
+            background: 
+                /* Primary highlight */
+                radial-gradient(ellipse at 30% 25%, 
+                    rgba(255,255,255,0.9) 0%, 
+                    rgba(255,255,255,0.4) 20%,
+                    transparent 50%),
+                /* Secondary highlight */
+                radial-gradient(ellipse at 25% 75%, 
+                    rgba(255,255,255,0.2) 0%, 
+                    transparent 30%),
+                /* Base glass color */
+                radial-gradient(ellipse at 50% 50%, 
+                    rgba(255,255,255,0.15) 0%, 
+                    rgba(255,255,255,0.05) 50%,
+                    transparent 100%);
+            
+            /* Multiple shadows for depth */
+            box-shadow:
+                /* Inner shadows */
+                inset 0 -3px 6px rgba(0,0,0,0.3),
+                inset 0 2px 4px rgba(255,255,255,0.9),
+                inset -2px 0 4px rgba(0,100,200,0.1),
+                /* Outer shadows */
+                0 2px 4px rgba(0,0,0,0.4),
+                0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        /* Refraction window inside droplet */
+        .droplet-refraction {
+            position: absolute;
+            inset: 15%; /* Smaller than full droplet for edge distortion */
+            border-radius: inherit;
+            overflow: hidden;
+            
+            /* This reveals clear content! */
+            backdrop-filter: blur(0px) brightness(1.2) contrast(1.1) saturate(1.3);
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* Edge distortion effect */
+        .droplet-glass::before {
+            content: '';
+            position: absolute;
+            inset: 5%;
+            border-radius: inherit;
+            background: radial-gradient(ellipse at 50% 50%,
+                transparent 40%,
+                rgba(255,255,255,0.1) 60%,
+                rgba(255,255,255,0.2) 80%,
+                rgba(200,220,255,0.3) 95%,
+                transparent 100%);
+            filter: blur(2px);
+            mix-blend-mode: screen;
+        }
+
+        /* Chromatic aberration at edges */
+        .droplet-glass::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: 
+                radial-gradient(ellipse at 30% 30%, 
+                    transparent 50%, 
+                    rgba(255,0,0,0.1) 70%, 
+                    transparent 71%),
+                radial-gradient(ellipse at 31% 31%, 
+                    transparent 50%, 
+                    rgba(0,255,0,0.1) 70%, 
+                    transparent 71%),
+                radial-gradient(ellipse at 32% 32%, 
+                    transparent 50%, 
+                    rgba(0,0,255,0.1) 70%, 
+                    transparent 71%);
+            mix-blend-mode: screen;
+            opacity: 0.5;
+        }
+
+        /* Specular highlight */
+        .droplet-highlight {
+            position: absolute;
+            top: 18%;
+            left: 28%;
+            width: 35%;
+            height: 25%;
+            background: radial-gradient(ellipse at center,
+                rgba(255,255,255,1) 0%,
+                rgba(255,255,255,0.8) 30%,
+                rgba(255,255,255,0.4) 60%,
+                transparent 100%);
+            border-radius: 50%;
+            transform: rotate(-20deg);
+            filter: blur(0.5px);
+            mix-blend-mode: screen;
+            opacity: 0.9;
+        }
+
+        /* Bottom reflection */
+        .droplet-reflection {
+            position: absolute;
+            bottom: 15%;
+            left: 20%;
+            right: 20%;
+            height: 20%;
+            background: linear-gradient(to bottom,
+                transparent 0%,
+                rgba(255,255,255,0.1) 50%,
+                transparent 100%);
+            border-radius: 50%;
+            filter: blur(3px);
+            opacity: 0.5;
+        }
+
+        /* Size classes */
+        .droplet-hybrid.tiny {
+            width: 18px;
+            height: 22px;
+        }
+
+        .droplet-hybrid.small {
+            width: 28px;
+            height: 34px;
+        }
+
+        .droplet-hybrid.medium {
+            width: 42px;
+            height: 50px;
+        }
+
+        .droplet-hybrid.large {
+            width: 65px;
+            height: 78px;
+        }
+
+        /* Trailing effect for movement */
+        .droplet-hybrid.falling {
+            animation: hybridFall var(--duration, 4s) ease-in;
+        }
+
+        @keyframes hybridFall {
+            0% {
+                transform: translateY(-100px) scaleY(1);
+                opacity: 0;
+            }
+            5% {
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(50vh) scaleY(1.05);
+            }
+            95% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(110vh) scaleY(1.1);
+                opacity: 0;
+            }
+        }
+
+        /* Control panel */
+        .hybrid-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.95);
+            padding: 25px;
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 100;
+            min-width: 300px;
+        }
+
+        .hybrid-controls h3 {
+            margin-bottom: 20px;
+            font-size: 20px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .control-row button {
+            flex: 1;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .control-row button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+        }
+
+        .control-row button:active {
+            transform: translateY(0);
+        }
+
+        /* Stats display */
+        .stats {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .stats div {
+            margin-bottom: 5px;
+        }
+
+        /* June's signature */
+        .signature {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 14px;
+            opacity: 0.6;
+        }
+
+        /* Performance mode toggle */
+        .perf-mode {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 10px;
+            opacity: 0.5;
+        }
+
+        /* High quality mode extras */
+        body.high-quality .droplet-glass {
+            will-change: transform;
+            transform: translateZ(0);
+        }
+
+        body.high-quality .droplet-refraction {
+            backdrop-filter: blur(0px) brightness(1.25) contrast(1.15) saturate(1.4) hue-rotate(2deg);
+        }
+    </style>
+</head>
+<body class="high-quality">
+    <!-- Performance indicator -->
+    <div class="perf-mode">HYBRID MODE</div>
+
+    <!-- Main rain system -->
+    <div class="rain-system" id="rainSystem">
+        <!-- Background content -->
+        <div class="content-background">
+            <div class="test-content">
+                <h1>HYBRID RAIN</h1>
+                <p>June's Speed + Jay's Accuracy</p>
+                <p style="margin-top: 20px; font-size: 16px; opacity: 0.7">
+                    Best of both worlds 🌧️
+                </p>
+            </div>
+        </div>
+
+        <!-- Frost overlay -->
+        <div class="frost-layer"></div>
+
+        <!-- Refraction layer (for future enhancements) -->
+        <div class="refraction-layer" id="refractionLayer"></div>
+    </div>
+
+    <!-- Hybrid Controls -->
+    <div class="hybrid-controls">
+        <h3>🎯 Hybrid Rain Controls</h3>
+        
+        <div class="control-row">
+            <button onclick="spawnSingle()">Single Drop</button>
+            <button onclick="spawnBurst()">Burst (10)</button>
+        </div>
+        
+        <div class="control-row">
+            <button onclick="toggleRain()">Toggle Rain</button>
+            <button onclick="toggleQuality()">Toggle Quality</button>
+        </div>
+        
+        <div class="control-row">
+            <button onclick="clearAll()">Clear All</button>
+            <button onclick="demoEffect()">Demo Pattern</button>
+        </div>
+        
+        <div class="stats">
+            <div>Droplets: <span id="dropletCount">0</span></div>
+            <div>FPS: <span id="fps">60</span></div>
+            <div>Quality: <span id="quality">High</span></div>
+            <div>Mode: <span id="mode">Hybrid</span></div>
+        </div>
+    </div>
+
+    <!-- Signature -->
+    <div class="signature">
+        June 🎨 + Jay 🔬 = Magic ✨
+    </div>
+
+    <script>
+        // HYBRID APPROACH: June's simplicity + Jay's correctness
+        class HybridRainSystem {
+            constructor() {
+                this.droplets = new Map();
+                this.raining = false;
+                this.highQuality = true;
+                this.dropletId = 0;
+                this.fps = 60;
+                this.lastFrame = performance.now();
+                
+                this.init();
+            }
+
+            init() {
+                // Click to spawn
+                document.getElementById('rainSystem').addEventListener('click', (e) => {
+                    if (e.target.closest('.hybrid-controls')) return;
+                    this.spawnAt(e.clientX, e.clientY, 'large');
+                });
+
+                // Start FPS counter
+                this.trackFPS();
+            }
+
+            createDroplet(x, y, size = 'medium') {
+                const id = this.dropletId++;
+                const droplet = document.createElement('div');
+                droplet.className = `droplet-hybrid ${size}`;
+                droplet.dataset.id = id;
+                
+                // Build the complex structure
+                droplet.innerHTML = `
+                    <div class="droplet-glass">
+                        <div class="droplet-refraction"></div>
+                        <div class="droplet-highlight"></div>
+                        <div class="droplet-reflection"></div>
+                    </div>
+                `;
+
+                // Position
+                droplet.style.left = x + 'px';
+                droplet.style.top = y + 'px';
+
+                // Add to DOM
+                document.getElementById('rainSystem').appendChild(droplet);
+
+                // Track it
+                this.droplets.set(id, {
+                    element: droplet,
+                    x: x,
+                    y: y,
+                    size: size,
+                    velocity: { x: (Math.random() - 0.5) * 0.5, y: 0 }
+                });
+
+                this.updateStats();
+                return droplet;
+            }
+
+            spawnAt(x, y, size) {
+                const droplet = this.createDroplet(x - 30, y - 40, size);
+                
+                // Animate falling
+                this.animateDroplet(droplet);
+            }
+
+            animateDroplet(droplet) {
+                const id = parseInt(droplet.dataset.id);
+                const data = this.droplets.get(id);
+                if (!data) return;
+
+                let { x, y, velocity } = data;
+                
+                const animate = () => {
+                    // Physics
+                    velocity.y += 0.3; // gravity
+                    velocity.y *= 0.995; // air resistance
+                    velocity.x *= 0.98; // lateral damping
+                    
+                    // Add slight wobble
+                    velocity.x += (Math.random() - 0.5) * 0.1;
+                    
+                    // Update position
+                    y += velocity.y;
+                    x += velocity.x;
+                    
+                    // Apply transform (better performance than top/left)
+                    droplet.style.transform = `translate(${x}px, ${y}px)`;
+                    
+                    // Update data
+                    data.x = x;
+                    data.y = y;
+                    
+                    // Check bounds
+                    if (y > window.innerHeight + 100) {
+                        this.removeDroplet(id);
+                        return;
+                    }
+                    
+                    // Continue animation
+                    if (this.highQuality) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        // Lower quality = less frequent updates
+                        setTimeout(animate, 1000/30);
+                    }
+                };
+                
+                animate();
+            }
+
+            removeDroplet(id) {
+                const data = this.droplets.get(id);
+                if (data) {
+                    data.element.remove();
+                    this.droplets.delete(id);
+                    this.updateStats();
+                }
+            }
+
+            startRain() {
+                this.raining = true;
+                
+                const rainLoop = () => {
+                    if (!this.raining) return;
+                    
+                    // Spawn rate based on quality
+                    const delay = this.highQuality ? 150 : 300;
+                    
+                    // Random position across top
+                    const x = Math.random() * window.innerWidth;
+                    const sizes = ['tiny', 'small', 'small', 'medium', 'medium', 'large'];
+                    const size = sizes[Math.floor(Math.random() * sizes.length)];
+                    
+                    this.spawnAt(x, -50, size);
+                    
+                    setTimeout(rainLoop, delay + Math.random() * delay);
+                };
+                
+                rainLoop();
+            }
+
+            stopRain() {
+                this.raining = false;
+            }
+
+            clearAll() {
+                this.stopRain();
+                this.droplets.forEach((data, id) => this.removeDroplet(id));
+            }
+
+            toggleQuality() {
+                this.highQuality = !this.highQuality;
+                document.body.classList.toggle('high-quality', this.highQuality);
+                document.getElementById('quality').textContent = this.highQuality ? 'High' : 'Low';
+            }
+
+            updateStats() {
+                document.getElementById('dropletCount').textContent = this.droplets.size;
+            }
+
+            trackFPS() {
+                const update = () => {
+                    const now = performance.now();
+                    const delta = now - this.lastFrame;
+                    this.lastFrame = now;
+                    this.fps = Math.round(1000 / delta);
+                    document.getElementById('fps').textContent = this.fps;
+                    requestAnimationFrame(update);
+                };
+                update();
+            }
+        }
+
+        // Initialize the hybrid system
+        const rainSystem = new HybridRainSystem();
+
+        // Global functions for buttons
+        function spawnSingle() {
+            const x = window.innerWidth / 2 + (Math.random() - 0.5) * 200;
+            rainSystem.spawnAt(x, 100, 'large');
+        }
+
+        function spawnBurst() {
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * window.innerWidth;
+                    const sizes = ['small', 'medium', 'large'];
+                    const size = sizes[Math.floor(Math.random() * sizes.length)];
+                    rainSystem.spawnAt(x, -50 + Math.random() * 100, size);
+                }, i * 100);
+            }
+        }
+
+        function toggleRain() {
+            if (rainSystem.raining) {
+                rainSystem.stopRain();
+            } else {
+                rainSystem.startRain();
+            }
+        }
+
+        function toggleQuality() {
+            rainSystem.toggleQuality();
+        }
+
+        function clearAll() {
+            rainSystem.clearAll();
+        }
+
+        function demoEffect() {
+            clearAll();
+            
+            // Create a nice pattern
+            const pattern = [
+                { x: 0.2, y: 0.3, size: 'large' },
+                { x: 0.35, y: 0.25, size: 'medium' },
+                { x: 0.5, y: 0.35, size: 'large' },
+                { x: 0.65, y: 0.25, size: 'medium' },
+                { x: 0.8, y: 0.3, size: 'large' },
+                { x: 0.3, y: 0.5, size: 'small' },
+                { x: 0.45, y: 0.55, size: 'medium' },
+                { x: 0.6, y: 0.5, size: 'small' },
+                { x: 0.75, y: 0.6, size: 'large' }
+            ];
+            
+            pattern.forEach((p, i) => {
+                setTimeout(() => {
+                    const x = p.x * window.innerWidth;
+                    const y = p.y * window.innerHeight;
+                    rainSystem.createDroplet(x, y, p.size);
+                }, i * 150);
+            });
+        }
+
+        // Auto-start with a few drops
+        setTimeout(() => {
+            spawnBurst();
+        }, 500);
+    </script>
+</body>
+</html>

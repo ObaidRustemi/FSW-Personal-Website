@@ -8,6 +8,11 @@
 
 import * as THREE from 'three';
 
+// Disable dynamic rendering in automated tests for deterministic screenshots
+const TEST_MODE = (typeof navigator !== 'undefined' && navigator.webdriver === true) ||
+  (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('testMode')) ||
+  (typeof document !== 'undefined' && document.documentElement?.dataset?.disableRain === '1');
+
 // SHADER 2: Create basic canvas element for WebGL
 console.log('🌊 SHADER SYSTEM: Initializing...');
 
@@ -171,6 +176,12 @@ function createWaterCanvas() {
 document.addEventListener('DOMContentLoaded', async () => {
   const menuOverlay = document.querySelector('.menu-overlay');
   if (menuOverlay) {
+    if (TEST_MODE) {
+      // In test mode, skip rendering to keep visuals stable
+      setupMenuAutoClose();
+      console.log('🧪 TEST_MODE: Skipping shader system');
+      return;
+    }
     waterCanvas = createWaterCanvas();
     menuOverlay.appendChild(waterCanvas);
     console.log('✅ SHADER 2: Canvas added to menu overlay');

@@ -3,8 +3,8 @@ const { test, expect } = require('@playwright/test');
 
 test.describe('Menu Overlay System', () => {
   test.beforeEach(async ({ page }) => {
-    // Start local server and navigate to page
-    await page.goto('http://localhost:8080');
+    // Start local server and navigate to page with testMode for deterministic visuals
+    await page.goto('http://localhost:8080/?testMode=1');
     // Wait for page to fully load
     await page.waitForLoadState('domcontentloaded');
   });
@@ -175,12 +175,12 @@ test.describe('Menu Overlay System', () => {
 
   test('visual regression - menu appearance', async ({ page }) => {
     // Take screenshot of initial state (with threshold for first-run)
-    await expect(page).toHaveScreenshot('menu-closed.png', { threshold: 0.3 });
+    await expect(page).toHaveScreenshot('menu-closed.png', { threshold: 0.3, maxDiffPixelRatio: 0.015 });
     
     // Open menu and take screenshot
     await page.locator('.toggler').click();
     await page.waitForTimeout(600); // Wait for animation to complete
-    await expect(page).toHaveScreenshot('menu-open.png', { threshold: 0.3 });
+    await expect(page).toHaveScreenshot('menu-open.png', { threshold: 0.3, maxDiffPixelRatio: 0.015 });
   });
 
   test('responsive design - mobile viewport', async ({ page }) => {

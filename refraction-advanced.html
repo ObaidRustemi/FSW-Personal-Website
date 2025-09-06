@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raindrip Refraction - Jay's Proper Implementation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Jay's Layered Approach - Proper Architecture */
+        .refraction-system {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Layer 1: Original Content */
+        .content-layer {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .content-layer::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px),
+                repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0,0,0,.1) 10px, rgba(0,0,0,.1) 20px);
+        }
+
+        .test-pattern {
+            position: relative;
+            text-align: center;
+            z-index: 2;
+        }
+
+        .test-pattern h1 {
+            font-size: 72px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .test-pattern p {
+            font-size: 24px;
+            opacity: 0.9;
+        }
+
+        /* Layer 2: Frosted Glass Overlay */
+        .frost-overlay {
+            position: absolute;
+            inset: 0;
+            backdrop-filter: blur(12px) saturate(1.1);
+            background: rgba(255,255,255,0.02);
+            z-index: 10;
+        }
+
+        /* Layer 3: Clear Content (Hidden, revealed through droplets) */
+        .clear-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            pointer-events: none;
+            /* This layer contains sharp content, masked by droplets */
+            mask-image: var(--droplet-masks);
+            mask-size: cover;
+            mask-repeat: no-repeat;
+            -webkit-mask-image: var(--droplet-masks);
+            -webkit-mask-size: cover;
+            -webkit-mask-repeat: no-repeat;
+        }
+
+        /* Clone of content without blur */
+        .clear-content {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .clear-content::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: 
+                repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px),
+                repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(0,0,0,.1) 10px, rgba(0,0,0,.1) 20px);
+        }
+
+        .clear-content .test-pattern {
+            /* Duplicate content structure */
+        }
+
+        /* Layer 4: Droplet Sprites */
+        .droplet-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 30;
+            pointer-events: none;
+        }
+
+        /* Advanced Droplet with Proper Optics */
+        .droplet-advanced {
+            position: absolute;
+            pointer-events: auto;
+        }
+
+        .droplet-body {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            /* Droplet shape using CSS */
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            background: radial-gradient(ellipse at 30% 30%, 
+                rgba(255,255,255,0.9) 0%, 
+                rgba(255,255,255,0.4) 30%,
+                rgba(255,255,255,0.1) 60%,
+                transparent 100%);
+            box-shadow:
+                /* Inner shadows for depth */
+                inset -2px -4px 4px rgba(0,0,0,0.2),
+                inset 2px 2px 4px rgba(255,255,255,0.8),
+                /* Outer shadow */
+                0 4px 8px rgba(0,0,0,0.3),
+                0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        /* Refraction edge effect */
+        .droplet-body::before {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            border-radius: inherit;
+            background: radial-gradient(ellipse at 50% 50%,
+                transparent 50%,
+                rgba(255,255,255,0.1) 70%,
+                rgba(255,255,255,0.3) 90%,
+                transparent 100%);
+            filter: blur(1px);
+        }
+
+        /* Specular highlight */
+        .droplet-body::after {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 25%;
+            width: 40%;
+            height: 30%;
+            background: radial-gradient(ellipse at center,
+                rgba(255,255,255,0.9) 0%,
+                rgba(255,255,255,0.6) 40%,
+                transparent 70%);
+            border-radius: 50%;
+            filter: blur(1px);
+            transform: rotate(-20deg);
+        }
+
+        /* Size variants */
+        .droplet-advanced.tiny { width: 15px; height: 18px; }
+        .droplet-advanced.small { width: 25px; height: 30px; }
+        .droplet-advanced.medium { width: 40px; height: 48px; }
+        .droplet-advanced.large { width: 60px; height: 72px; }
+
+        /* Jay's Control Interface */
+        .control-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.9);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 1000;
+            backdrop-filter: blur(20px);
+            min-width: 280px;
+        }
+
+        .control-panel h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #667eea;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .control-group button {
+            width: 100%;
+            padding: 8px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .control-group button:hover {
+            background: #764ba2;
+        }
+
+        /* Debug Overlay */
+        .debug-overlay {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.9);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .debug-overlay pre {
+            margin: 0;
+            color: #0f0;
+        }
+
+        /* SVG Filters for Advanced Effects */
+        .svg-filters {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG Filters -->
+    <svg class="svg-filters">
+        <defs>
+            <!-- Gaussian Blur for Refraction -->
+            <filter id="refraction-blur">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />
+                <feComponentTransfer>
+                    <feFuncA type="discrete" tableValues="1 1" />
+                </feComponentTransfer>
+            </filter>
+            
+            <!-- Displacement Map for Distortion -->
+            <filter id="droplet-distortion">
+                <feTurbulence baseFrequency="0.02" numOctaves="2" seed="1" />
+                <feDisplacementMap in="SourceGraphic" scale="2" />
+            </filter>
+        </defs>
+    </svg>
+
+    <!-- Main Refraction System -->
+    <div class="refraction-system" id="refractionSystem">
+        <!-- Layer 1: Original Content -->
+        <div class="content-layer">
+            <div class="test-pattern">
+                <h1>REFRACTION</h1>
+                <p>Jay's Theoretically Correct Implementation</p>
+                <p style="font-size: 16px; margin-top: 20px; opacity: 0.7;">
+                    Notice how droplets reveal sharp content through the blur
+                </p>
+            </div>
+        </div>
+
+        <!-- Layer 2: Frost Overlay -->
+        <div class="frost-overlay" id="frostLayer"></div>
+
+        <!-- Layer 3: Clear Layer (Masked) -->
+        <div class="clear-layer" id="clearLayer">
+            <div class="clear-content">
+                <div class="test-pattern">
+                    <h1>REFRACTION</h1>
+                    <p>Jay's Theoretically Correct Implementation</p>
+                    <p style="font-size: 16px; margin-top: 20px; opacity: 0.7;">
+                        Notice how droplets reveal sharp content through the blur
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layer 4: Droplet Sprites -->
+        <div class="droplet-layer" id="dropletLayer"></div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="control-panel">
+        <h3>Jay's Refraction Controls</h3>
+        
+        <div class="control-group">
+            <label>Blur Intensity: <span id="blurValue">12</span>px</label>
+            <input type="range" id="blurControl" min="0" max="30" value="12">
+        </div>
+        
+        <div class="control-group">
+            <label>Refraction Strength: <span id="refractionValue">100</span>%</label>
+            <input type="range" id="refractionControl" min="0" max="100" value="100">
+        </div>
+        
+        <div class="control-group">
+            <button onclick="addDroplet()">Add Single Droplet</button>
+        </div>
+        
+        <div class="control-group">
+            <button onclick="toggleRain()">Toggle Rain</button>
+        </div>
+        
+        <div class="control-group">
+            <button onclick="demonstrateRefraction()">Demonstrate Effect</button>
+        </div>
+        
+        <div class="control-group">
+            <button onclick="clearDroplets()">Clear All</button>
+        </div>
+    </div>
+
+    <!-- Debug Overlay -->
+    <div class="debug-overlay">
+        <pre id="debugInfo">
+Droplets: 0
+FPS: 60.0
+Mask Data: Ready
+Refraction: Active
+        </pre>
+    </div>
+
+    <script>
+        // Jay's Proper Implementation with Correct Compositing
+        class RefractionSystem {
+            constructor() {
+                this.droplets = [];
+                this.maskCanvas = document.createElement('canvas');
+                this.maskCtx = this.maskCanvas.getContext('2d');
+                this.isRaining = false;
+                this.init();
+            }
+
+            init() {
+                // Set up mask canvas
+                this.maskCanvas.width = window.innerWidth;
+                this.maskCanvas.height = window.innerHeight;
+                
+                // Initialize controls
+                this.setupControls();
+                
+                // Start render loop
+                this.animate();
+            }
+
+            setupControls() {
+                const blurControl = document.getElementById('blurControl');
+                const refractionControl = document.getElementById('refractionControl');
+
+                blurControl.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    document.getElementById('blurValue').textContent = value;
+                    document.getElementById('frostLayer').style.backdropFilter = 
+                        `blur(${value}px) saturate(1.1)`;
+                });
+
+                refractionControl.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    document.getElementById('refractionValue').textContent = value;
+                    document.getElementById('clearLayer').style.opacity = value / 100;
+                });
+            }
+
+            addDroplet(x = null, y = null, size = 'medium') {
+                // Random position if not specified
+                if (x === null) x = Math.random() * window.innerWidth;
+                if (y === null) y = Math.random() * window.innerHeight;
+
+                const droplet = {
+                    id: Date.now() + Math.random(),
+                    x: x,
+                    y: y,
+                    size: size,
+                    velocity: { x: 0, y: 0 },
+                    element: this.createDropletElement(size)
+                };
+
+                // Position the visual element
+                droplet.element.style.left = x + 'px';
+                droplet.element.style.top = y + 'px';
+
+                document.getElementById('dropletLayer').appendChild(droplet.element);
+                this.droplets.push(droplet);
+
+                // Update mask
+                this.updateMask();
+
+                return droplet;
+            }
+
+            createDropletElement(size) {
+                const droplet = document.createElement('div');
+                droplet.className = `droplet-advanced ${size}`;
+                droplet.innerHTML = '<div class="droplet-body"></div>';
+                return droplet;
+            }
+
+            updateMask() {
+                // Clear mask
+                this.maskCtx.clearRect(0, 0, this.maskCanvas.width, this.maskCanvas.height);
+                
+                // Draw droplets as white circles on black background
+                this.maskCtx.fillStyle = 'black';
+                this.maskCtx.fillRect(0, 0, this.maskCanvas.width, this.maskCanvas.height);
+
+                this.droplets.forEach(droplet => {
+                    const sizes = { tiny: 15, small: 25, medium: 40, large: 60 };
+                    const radius = sizes[droplet.size] / 2;
+
+                    // Create droplet shape
+                    this.maskCtx.save();
+                    this.maskCtx.translate(droplet.x + radius, droplet.y + radius);
+                    
+                    // Droplet gradient for soft edges
+                    const gradient = this.maskCtx.createRadialGradient(0, 0, 0, 0, 0, radius);
+                    gradient.addColorStop(0, 'white');
+                    gradient.addColorStop(0.7, 'rgba(255,255,255,0.9)');
+                    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+                    
+                    this.maskCtx.fillStyle = gradient;
+                    this.maskCtx.beginPath();
+                    this.maskCtx.ellipse(0, 0, radius, radius * 1.2, 0, 0, Math.PI * 2);
+                    this.maskCtx.fill();
+                    this.maskCtx.restore();
+                });
+
+                // Apply mask to clear layer
+                const dataURL = this.maskCanvas.toDataURL();
+                document.getElementById('clearLayer').style.setProperty(
+                    '--droplet-masks', 
+                    `url(${dataURL})`
+                );
+            }
+
+            animate() {
+                // Update physics
+                this.droplets.forEach(droplet => {
+                    // Simple gravity
+                    droplet.velocity.y += 0.1;
+                    droplet.velocity.y *= 0.99; // Air resistance
+                    
+                    droplet.y += droplet.velocity.y;
+                    
+                    // Update position
+                    droplet.element.style.transform = 
+                        `translate(${droplet.velocity.x}px, ${droplet.velocity.y}px)`;
+                    
+                    // Remove if off screen
+                    if (droplet.y > window.innerHeight + 100) {
+                        droplet.element.remove();
+                        const index = this.droplets.indexOf(droplet);
+                        this.droplets.splice(index, 1);
+                    }
+                });
+
+                // Update mask if droplets moved
+                if (this.droplets.length > 0) {
+                    this.updateMask();
+                }
+
+                // Update debug info
+                this.updateDebug();
+
+                requestAnimationFrame(() => this.animate());
+            }
+
+            updateDebug() {
+                const info = `Droplets: ${this.droplets.length}
+FPS: ${this.calculateFPS().toFixed(1)}
+Mask Data: ${this.maskCanvas.width}x${this.maskCanvas.height}
+Refraction: Active`;
+                document.getElementById('debugInfo').textContent = info;
+            }
+
+            calculateFPS() {
+                // Simple FPS calculation
+                const now = performance.now();
+                if (!this.lastFrame) this.lastFrame = now;
+                const delta = now - this.lastFrame;
+                this.lastFrame = now;
+                return 1000 / delta;
+            }
+
+            clearDroplets() {
+                this.droplets.forEach(d => d.element.remove());
+                this.droplets = [];
+                this.updateMask();
+            }
+        }
+
+        // Initialize system
+        const refractionSystem = new RefractionSystem();
+
+        // Global functions for buttons
+        function addDroplet() {
+            const sizes = ['tiny', 'small', 'medium', 'large'];
+            const size = sizes[Math.floor(Math.random() * sizes.length)];
+            refractionSystem.addDroplet(
+                window.innerWidth / 2 + (Math.random() - 0.5) * 200,
+                100,
+                size
+            );
+        }
+
+        function toggleRain() {
+            refractionSystem.isRaining = !refractionSystem.isRaining;
+            
+            if (refractionSystem.isRaining) {
+                const rainLoop = setInterval(() => {
+                    if (!refractionSystem.isRaining) {
+                        clearInterval(rainLoop);
+                        return;
+                    }
+                    addDroplet();
+                }, 300);
+            }
+        }
+
+        function demonstrateRefraction() {
+            // Clear first
+            refractionSystem.clearDroplets();
+            
+            // Create a pattern
+            const positions = [
+                { x: window.innerWidth * 0.3, y: 200 },
+                { x: window.innerWidth * 0.5, y: 150 },
+                { x: window.innerWidth * 0.7, y: 200 },
+                { x: window.innerWidth * 0.4, y: 350 },
+                { x: window.innerWidth * 0.6, y: 350 }
+            ];
+            
+            positions.forEach((pos, i) => {
+                setTimeout(() => {
+                    refractionSystem.addDroplet(pos.x, pos.y, 'large');
+                }, i * 200);
+            });
+        }
+
+        function clearDroplets() {
+            refractionSystem.clearDroplets();
+        }
+
+        // Click to add droplet
+        document.getElementById('refractionSystem').addEventListener('click', (e) => {
+            if (e.target.closest('.control-panel')) return;
+            
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            refractionSystem.addDroplet(x, y, 'large');
+        });
+    </script>
+</body>
+</html>

@@ -9,6 +9,7 @@
         linear-gradient(120deg, #0b1e39, #00152a 60%),
         url('https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat fixed;
     }
+    img.bg { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
     .hero { padding: 6rem 4rem; max-width: 60rem; }
     .overlay { position: fixed; inset: 0; background: rgba(12,14,16,0.35);
       backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); pointer-events: none; }
@@ -20,71 +21,52 @@
   </style>
 </head>
 <body>
+  <img id="bgImage" class="bg" src="https://res.cloudinary.com/traveltripperweb/image/upload/c_fit,f_auto,h_1200,q_auto,w_1200/v1627681436/bgvlhnmlrwyhm2xwdock.jpg" crossorigin="anonymous" alt="Background" />
+
   <div class="hero">
     <h1>Rain on Glass – Desktop Tech Demo</h1>
     <p>Toggle the overlay. Look for sharper, slightly shifted background inside droplets (refraction), plus rim and streaks.</p>
   </div>
 
-  <button class="toggle" id="toggle">Toggle Overlay</button>
-  <div class="overlay" id="overlay" hidden>
+  <div class="overlay" id="overlay">
     <canvas id="rainCanvas"></canvas>
   </div>
 
   <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="rain-on-glass.js"></script>
   <script>
-  (function () {
-    const overlay = document.getElementById('overlay');
-    const canvas  = document.getElementById('rainCanvas');
-    const ctx     = canvas.getContext('2d', { alpha: true });
-    const supportsBackdrop = CSS.supports('backdrop-filter', 'blur(1px)') || CSS.supports('-webkit-backdrop-filter', 'blur(1px)');
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    let W=0, H=0, raf=0, sharpBitmap=null, drops=[];
-
-    document.getElementById('toggle').addEventListener('click', async () => {
-      if (overlay.hidden) { overlay.hidden = false; await start(); } else { stop(); overlay.hidden = true; }
-    });
-
-    async function start() {
+  (function(){
+    const canvas = document.getElementById('rainCanvas');
+    const bgImg = document.getElementById('bgImage');
+    function size(){
+      const dpr = Math.min(window.devicePixelRatio||1, 2);
+      const W = Math.max(1, Math.floor(window.innerWidth));
+      const H = Math.max(1, Math.floor(window.innerHeight));
+      canvas.width = Math.round(W*dpr);
+      canvas.height = Math.round(H*dpr);
+      canvas.style.width = W+'px';
+      canvas.style.height = H+'px';
+    }
+    window.addEventListener('resize', size);
+    window.addEventListener('load', async () => {
       size();
-      overlay.style.visibility = 'hidden';
-      const rect = overlay.getBoundingClientRect();
-      const shot = await html2canvas(document.body, { backgroundColor: null, x: rect.left + scrollX, y: rect.top + scrollY,
-        width: rect.width, height: rect.height, scale: dpr, useCORS: true });
-      overlay.style.visibility = 'visible';
-
-      sharpBitmap = ('createImageBitmap' in window) ? await createImageBitmap(shot) : shot;
-      if (!supportsBackdrop) {
-        const blur = document.createElement('canvas'); blur.width = shot.width; blur.height = shot.height;
-        const bctx = blur.getContext('2d'); bctx.filter = 'blur(14px)'; bctx.drawImage(shot, 0, 0);
-        overlay.classList.add('no-backdrop'); overlay.style.backgroundImage = `url(${blur.toDataURL('image/png')})`;
-        overlay.style.backgroundSize = `${rect.width}px ${rect.height}px`; overlay.style.backgroundPosition = '0 0';
-      }
-
-      init(120); animate();
-    }
-
-    function stop() { cancelAnimationFrame(raf); drops.length = 0; sharpBitmap = null; ctx.clearRect(0,0,W,H); }
-    function size() { const r = overlay.getBoundingClientRect(); W = Math.max(1, Math.floor(r.width)); H = Math.max(1, Math.floor(r.height));
-      canvas.width = Math.round(W*dpr); canvas.height = Math.round(H*dpr); canvas.style.width=W+'px'; canvas.style.height=H+'px'; ctx.setTransform(dpr,0,0,dpr,0,0); }
-    window.addEventListener('resize', () => { if (!overlay.hidden) size(); });
-
-    function init(n){ drops = Array.from({length:n}, () => makeDrop()); }
-    function makeDrop(){ const r = 6 + Math.random()*10; return { x: Math.random()*W, y: -Math.random()*H, r, vx:(Math.random()*0.4-0.2), vy:0.6+Math.random()*0.9 }; }
-    function update(d){ const g=0.03; d.vy=Math.min(d.vy+g,5); d.vx*=0.995; d.x+=d.vx; d.y+=d.vy; if(d.y-d.r>H){ d.y=-d.r-Math.random()*40; d.x=Math.random()*W; d.vy=0.6+Math.random()*0.9; d.vx=(Math.random()*0.4-0.2);} if(d.x<-10)d.x=W+10; if(d.x>W+10)d.x=-10; }
-
-    function draw(d){ if(!sharpBitmap) return; const stretch=Math.min(1.35,1+Math.abs(d.vy)*0.12); const ry=d.r*stretch; const rx=d.r/Math.sqrt(stretch);
-      const offsetX=rx*0.22, offsetY=-ry*0.12, mag=1.06; ctx.save(); ctx.beginPath(); ctx.ellipse(d.x,d.y,rx,ry,0,0,Math.PI*2); ctx.clip();
-      const sx=Math.max(0,Math.min(canvas.width/dpr-rx*2,d.x-rx+offsetX)); const sy=Math.max(0,Math.min(canvas.height/dpr-ry*2,d.y-ry+offsetY));
-      const sw=Math.min(rx*2, canvas.width/dpr - sx); const sh=Math.min(ry*2, canvas.height/dpr - sy); const dw=sw*mag, dh=sh*mag; const dx=d.x-dw/2, dy=d.y-dh/2;
-      ctx.drawImage(sharpBitmap, sx*dpr, sy*dpr, sw*dpr, sh*dpr, dx, dy, dw, dh);
-      const hlx=d.x-rx*0.3, hly=d.y-ry*0.3; const grad=ctx.createRadialGradient(hlx,hly,0,hlx,hly,Math.max(rx,ry));
-      grad.addColorStop(0,'rgba(255,255,255,0.35)'); grad.addColorStop(1,'rgba(255,255,255,0.0)'); ctx.globalCompositeOperation='lighter'; ctx.fillStyle=grad; ctx.fillRect(d.x-rx,d.y-ry,rx*2,ry*2);
-      ctx.globalCompositeOperation='source-over'; ctx.strokeStyle='rgba(255,255,255,0.35)'; ctx.lineWidth=1.1; ctx.beginPath(); ctx.ellipse(d.x,d.y,rx,ry,0,0,Math.PI*2); ctx.stroke(); ctx.restore();
-      if(d.vy>1.2){ ctx.beginPath(); ctx.moveTo(d.x,d.y-ry*1.1); ctx.lineTo(d.x,d.y-ry*1.1-Math.min(28,d.vy*8)); ctx.lineWidth=rx*0.18; ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.stroke(); }
-    }
-
-    function animate(){ ctx.clearRect(0,0,W,H); for(const d of drops){ update(d); draw(d);} raf=requestAnimationFrame(animate); }
+      const rain = new RainOnGlass(canvas, {
+        standalone: true,
+        backgroundSource: '#bgImage',
+        blur: 8,
+        gravityDeg: 90,
+        gravity: 0.6,
+        collisions: true,
+        smudge: true,
+        fps: 60,
+        maxDrops: 180,
+        useMiniRefraction: true,
+        miniBoost: true
+      });
+      await rain.captureBackground();
+      rain.start();
+      window.__demo = rain;
+    });
   })();
   </script>
 </body>

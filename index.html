@@ -6,12 +6,11 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+          "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
         }
       }
     </script>
-    <!-- legacy reference left intentionally; file may be absent -->
-    <script type="module" defer src="main.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
@@ -30,14 +29,6 @@
   <body>
   
     <!-- SHADER SYSTEM: Three.js ES Modules for WebGL Water Shaders -->
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
-        }
-      }
-    </script>
     <!-- 🌊 TIER A: SVG Filters for Realistic Water Droplets -->
     <svg width="0" height="0" style="position: absolute; pointer-events: none;" aria-hidden="true">
       <defs>
@@ -68,8 +59,8 @@
           <canvas id="rain-glass"></canvas>
         </div>
         
-        <!-- Layer 2: TIER A SVG Droplets with Enhanced Randomization -->
-        <div class="droplets" aria-hidden="true">
+        <!-- Removed old SVG droplet layer -->
+        <!-- <div class="droplets" aria-hidden="true"> -->
           <!-- Tiny droplets - micro condensation (0.2-0.5 size, 6-9s duration) -->
           <svg class="drop drop-1" viewBox="-20 -20 140 200" style="--delay: -1.2s; left: 5vw; top: 3vh; --size: 0.2; --duration: 6s;">
             <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
@@ -197,7 +188,7 @@
           <svg class="drop drop-40" viewBox="-20 -20 140 200" style="--delay: -8.1s; left: 24vw; top: 55vh; --size: 1.7; --duration: 18s;">
             <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
           </svg>
-        </div>
+        <!-- </div> -->
 
         <!-- Layer 3: UI Content (menu items) -->
         <nav class="menu-content" role="navigation">

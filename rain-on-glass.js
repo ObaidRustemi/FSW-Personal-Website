@@ -88,6 +88,7 @@ class RainOnGlass {
     this.shrinkRate = Number(q.get('shrinkRate')) || options.shrinkRate || 0.01; // size shrinking rate
     this.xShifting = [Number(q.get('xShiftMin')) || options.xShifting?.[0] || 0,
                      Number(q.get('xShiftMax')) || options.xShifting?.[1] || 0.1]; // horizontal drift range
+    this.slipRate = Number(q.get('slipRate')) || options.slipRate || 0.1; // slip rate for random motion
     
     // Advanced rendering parameters
     this.refractBase = Number(q.get('refractBase')) || options.refractBase || 0.2; // base refraction strength (reduced for realism)
@@ -510,8 +511,28 @@ class RainOnGlass {
       prevX: spawnX,
       prevY: y ?? (-radius - Math.random() * 100 * this.dpr),
       adhesion: this.adhesionBase,
-      _trailAccumulated: 0
+      _trailAccumulated: 0,
+      // Advanced physics properties (inspired by RainDrop class)
+      density: 1.0, // Base density
+      spread: { x: 0, y: 0 }, // Shape deformation
+      resistance: 0, // Dynamic friction
+      shifting: 0, // Horizontal drift
+      lastTrailPos: { x: spawnX, y: y ?? (-radius - Math.random() * 100 * this.dpr) },
+      nextTrailDistance: 20 + Math.random() * 20, // Dynamic trail spacing
+      nextRandomTime: 0 // Random motion timing
     });
+  }
+
+  // Random motion system inspired by RainDrop class
+  randomMotion(drop) {
+    try {
+      // Calculate maximum resistance based on drop size and slip rate
+      const maxResistance = (8 + Math.random() * 8) * (1 - this.slipRate) ** 2 * 4;
+      drop.resistance = Math.random() * this.gravityBase * maxResistance;
+      drop.shifting = Math.random() * (this.xShifting[0] + Math.random() * (this.xShifting[1] - this.xShifting[0]));
+    } catch (error) {
+      console.warn('Error in randomMotion:', error);
+    }
   }
 
   // Multi-pass blur system (inspired by WebGL BlurRenderer)
@@ -731,8 +752,8 @@ class RainOnGlass {
   update(dt) {
     try {
       const g = this.gravityBase;
-      for (let i = this.drops.length - 1; i >= 0; i--) {
-        const d = this.drops[i];
+    for (let i = this.drops.length - 1; i >= 0; i--) {
+      const d = this.drops[i];
         
         // Validate drop data
         if (!d || typeof d.x !== 'number' || typeof d.y !== 'number' || typeof d.r !== 'number') {
@@ -745,17 +766,115 @@ class RainOnGlass {
       const prevX = d.x;
       const prevY = d.y;
       
-      // Simplified but effective physics - back to working system
-      const strength = g * (d.r / 25);  // Reduced gravity strength for slower fall
+      // Advanced physics system inspired by RainDrop class
       const dtScale = Math.max(0.016, Math.min(0.1, dt)) * this.fps / 1.0; // normalize to configured fps
       
-      // Apply gravity in device pixel space
-      d.vx += Math.cos(this.gravityAngleRad) * strength * dtScale * this.dpr;
-      d.vy += Math.sin(this.gravityAngleRad) * strength * dtScale * this.dpr;
+      // Validate dtScale is finite
+      if (!isFinite(dtScale) || dtScale <= 0) {
+        console.warn('Invalid dtScale for drop', i, 'dtScale:', dtScale, 'dt:', dt, 'fps:', this.fps);
+        continue; // Skip this drop's update
+      }
+      
+      // Random motion intervals (inspired by RainDrop class)
+      if (d.nextRandomTime <= this.last) {
+        d.nextRandomTime = this.last + (0.1 + Math.random() * 0.4); // motionInterval
+        this.randomMotion(d);
+      }
+      
+      // Evaporation (mass decreases over time) - prevent negative mass
+      d.mass = Math.max(0, d.mass - this.evaporate * dtScale);
+      if (d.mass <= 0) {
+        d._dead = true;
+      }
+      
+      // Skip physics calculations for dead drops
+      if (d._dead || d.mass <= 0) {
+        continue;
+      }
+      
+      // Initialize resistance and shifting if they don't exist (for backward compatibility)
+      if (!d.resistance || !isFinite(d.resistance)) {
+        d.resistance = 0;
+      }
+      if (!d.shifting || !isFinite(d.shifting)) {
+        d.shifting = 0;
+      }
+      
+      // Advanced physics calculation with validation
+      const force = this.gravityBase * d.mass - d.resistance;
+      const acceleration = force / d.mass;
+      
+      // Validate physics calculations
+      if (!isFinite(force) || !isFinite(acceleration) || !isFinite(d.mass) || d.mass <= 0) {
+        console.warn('Invalid physics values for drop', i, 'force:', force, 'acceleration:', acceleration, 'mass:', d.mass);
+        d._dead = true; // Mark as dead instead of trying to fix
+        continue;
+      }
+      
+      d.vy += acceleration * dtScale;
+      if (d.vy < 0) d.vy = 0; // Prevent upward movement
+      d.vx = Math.abs(d.vy) * d.shifting; // Horizontal drift based on vertical speed
+      
+      // Validate velocities are finite
+      if (!isFinite(d.vx) || !isFinite(d.vy)) {
+        console.warn('Invalid velocities for drop', i, 'vx:', d.vx, 'vy:', d.vy);
+        d.vx = 0;
+        d.vy = 0;
+      }
+      
+      // Update position with validation
+      const newX = d.x + d.vx * dtScale;
+      const newY = d.y + d.vy * dtScale;
+      
+      // Validate new positions are finite
+      if (isFinite(newX) && isFinite(newY)) {
+        d.x = newX;
+        d.y = newY;
+      } else {
+        console.warn('Invalid position update for drop', i, 'newX:', newX, 'newY:', newY, 'vx:', d.vx, 'vy:', d.vy, 'dtScale:', dtScale);
+        // Reset to safe values
+        d.x = Math.max(0, Math.min(this.canvas.width, d.x || 0));
+        d.y = Math.max(0, Math.min(this.canvas.height, d.y || 0));
+        d.vx = 0;
+        d.vy = 0;
+      }
       
       // Add wind effect
       d.vx += this.windX * dtScale;
       d.vy += this.windY * dtScale;
+      
+      // Initialize spread if it doesn't exist (for backward compatibility)
+      if (!d.spread) {
+        d.spread = { x: 0, y: 0 };
+      }
+      
+      // Velocity-based spread (inspired by RainDrop class)
+      const currentDropSpeed = Math.hypot(d.vx, d.vy);
+      if (currentDropSpeed > 5 && d.r > 0) {
+        const spreadByVelocity = this.velocitySpread * 2 * Math.atan(Math.abs(d.vy * 0.005)) / Math.PI;
+        d.spread.y = Math.max(d.spread.y, spreadByVelocity);
+      }
+      
+      // Shrink spread over time
+      d.spread.x *= Math.pow(this.shrinkRate, dtScale);
+      d.spread.y *= Math.pow(this.shrinkRate, dtScale);
+      
+      // Initialize lastTrailPos if it doesn't exist (for backward compatibility)
+      if (!d.lastTrailPos) {
+        d.lastTrailPos = { x: d.x, y: d.y };
+      }
+      if (!d.nextTrailDistance) {
+        d.nextTrailDistance = 20 + Math.random() * 20;
+      }
+      
+      // Distance-based trail generation (inspired by RainDrop class)
+      const distanceMoved = Math.hypot(d.x - d.lastTrailPos.x, d.y - d.lastTrailPos.y);
+      if (distanceMoved > d.nextTrailDistance) {
+        this.layTrail(d, d.lastTrailPos.x, d.lastTrailPos.y);
+        d.lastTrailPos.x = d.x;
+        d.lastTrailPos.y = d.y;
+        d.nextTrailDistance = 20 + Math.random() * 20; // New random distance
+      }
       
       // variance (wind jitter)
       if (this.gravityVariance) d.vx += (Math.random() * 2 - 1) * this.gravityVariance * dtScale * 0.1;
@@ -784,10 +903,10 @@ class RainOnGlass {
         }
       }
       
-      // Velocity-based spread (inspired by RaindropFX)
-      const dropSpeed = Math.hypot(d.vx, d.vy);
-      if (dropSpeed > 5 && d.r > 0) {
-        d.stretch = 1 + Math.min(dropSpeed / (10 * d.r), 1.1) * this.velocitySpread;
+      // Velocity-based stretch (inspired by RaindropFX)
+      const stretchSpeed = Math.hypot(d.vx, d.vy);
+      if (stretchSpeed > 5 && d.r > 0) {
+        d.stretch = 1 + Math.min(stretchSpeed / (10 * d.r), 1.1) * this.velocitySpread;
       } else {
         d.stretch = 1;
       }
@@ -843,19 +962,40 @@ class RainOnGlass {
       // bin drops
       for (let i = 0; i < this.drops.length; i++) {
         const d = this.drops[i];
+        
+        // Validate drop coordinates and cell size
+        if (!isFinite(d.x) || !isFinite(d.y) || !isFinite(cell) || cell <= 0) {
+          console.warn('Invalid drop coordinates or cell size for drop', i, 'x:', d.x, 'y:', d.y, 'cell:', cell);
+          continue;
+        }
+        
         const cx = Math.min(cols - 1, Math.max(0, Math.floor(d.x / cell)));
         const cy = Math.min(rows - 1, Math.max(0, Math.floor(d.y / cell)));
-        this.grid.buckets[cy * cols + cx].push(i);
+        
+        // Validate calculated grid coordinates
+        if (!isFinite(cx) || !isFinite(cy)) {
+          console.warn('Invalid grid coordinates for drop', i, 'cx:', cx, 'cy:', cy);
+          continue;
+        }
+        
+        const bucketIndex = cy * cols + cx;
+        const bucket = this.grid.buckets[bucketIndex];
+        if (bucket && Array.isArray(bucket)) {
+          bucket.push(i);
+        } else {
+          console.warn('Invalid bucket at index', bucketIndex, 'for drop', i);
+        }
       }
       // check local neighborhoods
       const neighborOffsets = [0, 1, -1, cols, -cols]; // reduce checks for perf
       for (let bi = 0; bi < this.grid.buckets.length; bi++) {
         const base = this.grid.buckets[bi];
-        if (base.length === 0) continue;
+        if (!base || !Array.isArray(base) || base.length === 0) continue;
         for (const off of neighborOffsets) {
           const ni = bi + off;
           if (ni < 0 || ni >= this.grid.buckets.length) continue;
           const neigh = this.grid.buckets[ni];
+          if (!neigh || !Array.isArray(neigh)) continue;
           for (let aIdx = 0; aIdx < base.length; aIdx++) {
             for (let bIdx = 0; bIdx < neigh.length; bIdx++) {
               const iA = base[aIdx];
@@ -982,8 +1122,8 @@ class RainOnGlass {
 
   render() {
     try {
-      const ctx = this.ctx;
-      this.clear();
+    const ctx = this.ctx;
+    this.clear();
       // Draw in CSS pixel coordinates; scale context to DPR
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
@@ -1009,8 +1149,20 @@ class RainOnGlass {
       
       const x = d.x / this.dpr;
       const y = d.y / this.dpr;
-      const rx = Math.max(0.1, (d.r * 0.92) / this.dpr); // Ensure minimum radius
-      const ry = Math.max(0.1, (d.r * 0.92 * d.stretch) / this.dpr); // Ensure minimum radius
+      
+      // Validate that x and y are finite numbers
+      if (!isFinite(x) || !isFinite(y)) {
+        continue;
+      }
+      // Enhanced droplet shape calculation using spread system (inspired by RainDrop class)
+      const baseRadius = Math.max(0.1, (d.r * 0.92) / this.dpr);
+      const rx = Math.max(0.1, baseRadius * (1 + (d.spread?.x || 0))); // Horizontal spread
+      const ry = Math.max(0.1, baseRadius * (1 + (d.spread?.y || 0)) * (d.stretch || 1)); // Vertical spread + stretch
+      
+      // Validate that rx and ry are finite numbers
+      if (!isFinite(rx) || !isFinite(ry) || rx <= 0 || ry <= 0) {
+        continue;
+      }
 
       ctx.save();
       ctx.beginPath();
@@ -1073,13 +1225,13 @@ class RainOnGlass {
       if (this.hasBackground && this.bgSharp.width > 0 && this.bgSharp.height > 0 && rx > 2) {
         // Optimized refraction parameters for realistic water droplets
         const sizeFactor = Math.min(1, rx / 8); // Scale effect by droplet size
-        const baseOffsetX = rx * this.refractBase * 0.3 * sizeFactor;  // Reduced horizontal distortion
-        const baseOffsetY = -ry * (this.refractBase * 0.2) * sizeFactor; // Reduced vertical distortion
-        const baseMag = 1.01 + (0.01 * sizeFactor);  // More realistic magnification, scaled by size
-        const boost = (this.useMiniRefraction && this.miniBoost) ? this.miniOffsetScale * 0.5 * sizeFactor : 1; // Reduced boost
+        const baseOffsetX = rx * this.refractBase * 0.15 * sizeFactor;  // Even more subtle horizontal distortion
+        const baseOffsetY = -ry * (this.refractBase * 0.1) * sizeFactor; // Even more subtle vertical distortion
+        const baseMag = 1.005 + (0.005 * sizeFactor);  // Very subtle magnification for realism
+        const boost = (this.useMiniRefraction && this.miniBoost) ? this.miniOffsetScale * 0.3 * sizeFactor : 1; // Further reduced boost
         const offsetX = baseOffsetX * boost * this.refractScale;   // More subtle horizontal refraction
         const offsetY = baseOffsetY * boost * this.refractScale;   // More subtle vertical refraction
-        const mag = (this.useMiniRefraction && this.miniBoost) ? Math.min(1.02, this.miniMagnification * 0.5 * sizeFactor) : baseMag; // Capped magnification
+        const mag = (this.useMiniRefraction && this.miniBoost) ? Math.min(1.01, this.miniMagnification * 0.3 * sizeFactor) : baseMag; // Very subtle magnification
         
         // Calculate source rectangle with refraction offset
         let sx, sy, sw, sh, srcCanvas;
@@ -1104,13 +1256,65 @@ class RainOnGlass {
         }
         
         if (sw > 0 && sh > 0) {
-          // Draw magnified sharp background
-          const dw = sw * mag / this.dpr;
-          const dh = sh * mag / this.dpr;
-          const dx = x - dw / 2;
-          const dy = y - dh / 2;
+          // TRUE CIRCULAR REFRACTION: Radial sampling instead of rectangular
+          const radius = Math.min(rx, ry);
+          const centerX = x;
+          const centerY = y;
           
-          ctx.drawImage(srcCanvas, sx, sy, sw, sh, dx, dy, dw, dh);
+          ctx.save();
+          
+          // Create circular mask
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          ctx.clip();
+          
+          // Create temporary canvas for radial sampling
+          const tempCanvas = document.createElement('canvas');
+          const tempSize = Math.ceil(radius * 2);
+          tempCanvas.width = tempSize;
+          tempCanvas.height = tempSize;
+          const tempCtx = tempCanvas.getContext('2d');
+          
+          // PROPER RADIAL SAMPLING: Show magnified background through water lens
+          // Create a larger sampling area to capture background content
+          const sampleRadius = radius * 1.5; // Sample larger area for background content
+          const sampleSize = Math.ceil(sampleRadius * 2);
+          
+          // Calculate source area with refraction offset (like a magnifying glass)
+          const sourceX = Math.max(0, Math.min(srcCanvas.width - sampleSize, (centerX - sampleRadius + offsetX) * this.dpr));
+          const sourceY = Math.max(0, Math.min(srcCanvas.height - sampleSize, (centerY - sampleRadius + offsetY) * this.dpr));
+          const sourceW = Math.min(sampleSize, srcCanvas.width - sourceX);
+          const sourceH = Math.min(sampleSize, srcCanvas.height - sourceY);
+          
+          if (sourceW > 0 && sourceH > 0) {
+            // Draw the background sample with magnification (like water droplet lens)
+            const magSize = radius * 2 * mag; // Magnified size
+            const magX = centerX - magSize / 2;
+            const magY = centerY - magSize / 2;
+            
+            // Apply radial distortion by drawing with circular mask
+            tempCtx.save();
+            tempCtx.beginPath();
+            tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            tempCtx.clip();
+            
+            // Draw magnified background (this creates the lens effect)
+            tempCtx.drawImage(srcCanvas, sourceX, sourceY, sourceW, sourceH, 
+              magX, magY, magSize, magSize);
+            
+            tempCtx.restore();
+          }
+          
+          // No need for putImageData - we drew directly to tempCtx
+          
+          // Apply magnification and draw
+          const drawSize = radius * 2 * mag;
+          const drawX = centerX - drawSize / 2;
+          const drawY = centerY - drawSize / 2;
+          
+          ctx.drawImage(tempCanvas, 0, 0, tempSize, tempSize, drawX, drawY, drawSize, drawSize);
+          
+          ctx.restore();
         }
       }
       ctx.restore();
@@ -1233,12 +1437,12 @@ class RainOnGlass {
 
   loop(t) {
     try {
-      if (!this.running) return;
+    if (!this.running) return;
       
       // Frame pacing: clamp dt and skip update when tab is throttled to reduce CPU
       const dtRaw = (t - this.last) / 1000;
       const dt = Math.min(Math.max(0, dtRaw), 0.08);
-      this.last = t;
+    this.last = t;
       
       // Debug logging every 60 frames (about once per second at 60fps)
       if (Math.floor(t / 1000) !== this._lastDebugSecond) {
@@ -1253,9 +1457,9 @@ class RainOnGlass {
         if (keep < this.drops.length) this.drops.length = keep;
       }
       
-      this.update(dt);
-      this.render();
-      requestAnimationFrame(this.loop);
+    this.update(dt);
+    this.render();
+    requestAnimationFrame(this.loop);
       
     } catch (error) {
       console.error('Error in RainOnGlass.loop():', error);

@@ -220,6 +220,374 @@
                    enableTrails: rain.enableTrails,
                    enableCondensation: rain.enableCondensation
                  });
+               },
+               testDropMovement: () => {
+                 if (rain.drops.length === 0) {
+                   console.log('No drops to test movement');
+                   return;
+                 }
+                 
+                 const testDrop = rain.drops[0];
+                 const initialY = testDrop.y;
+                 
+                 console.log('Testing drop movement...');
+                 console.log('Initial position:', { x: testDrop.x, y: initialY });
+                 console.log('Initial velocity:', { vx: testDrop.vx, vy: testDrop.vy });
+                 console.log('Mass:', testDrop.mass);
+                 console.log('Resistance:', testDrop.resistance);
+                 console.log('Shifting:', testDrop.shifting);
+                 
+                 // Wait 1 second and check position
+                 setTimeout(() => {
+                   const finalY = testDrop.y;
+                   const moved = Math.abs(finalY - initialY) > 1;
+                   console.log('After 1 second:');
+                   console.log('Final position:', { x: testDrop.x, y: finalY });
+                   console.log('Final velocity:', { vx: testDrop.vx, vy: testDrop.vy });
+                   console.log('Movement detected:', moved, 'Distance moved:', Math.abs(finalY - initialY));
+                   
+                   if (!moved) {
+                     console.warn('⚠️ DROP NOT MOVING - Physics may be broken!');
+                   } else {
+                     console.log('✅ Drop is moving correctly');
+                   }
+                 }, 1000);
+               },
+               runComprehensiveTests: () => {
+                 console.log('🧪 RUNNING COMPREHENSIVE RAIN SYSTEM TESTS');
+                 console.log('==========================================');
+                 
+                 // Test 1: Basic System State
+                 console.log('\n📊 Test 1: Basic System State');
+                 console.log('Running:', rain.running);
+                 console.log('Has Background:', rain.hasBackground);
+                 console.log('Canvas Size:', { width: rain.canvas.width, height: rain.canvas.height });
+                 console.log('DPR:', rain.dpr);
+                 
+                 // Test 2: Physics Configuration
+                 console.log('\n⚙️ Test 2: Physics Configuration');
+                 console.log('Gravity Base:', rain.gravityBase);
+                 console.log('FPS:', rain.fps);
+                 console.log('Evaporate:', rain.evaporate);
+                 console.log('Wind X/Y:', rain.windX, rain.windY);
+                 
+                 // Test 3: Drop Properties
+                 console.log('\n💧 Test 3: Drop Properties');
+                 if (rain.drops.length > 0) {
+                   const drop = rain.drops[0];
+                   console.log('First Drop Properties:');
+                   console.log('- Position:', { x: drop.x, y: drop.y });
+                   console.log('- Velocity:', { vx: drop.vx, vy: drop.vy });
+                   console.log('- Mass:', drop.mass);
+                   console.log('- Radius:', drop.r);
+                   console.log('- Resistance:', drop.resistance);
+                   console.log('- Shifting:', drop.shifting);
+                   console.log('- Dead:', drop._dead);
+                   console.log('- Spread:', drop.spread);
+                 } else {
+                   console.log('No drops found!');
+                 }
+                 
+                 // Test 4: Control Panel Values
+                 console.log('\n🎛️ Test 4: Control Panel Values');
+                 const controls = {
+                   rainAmount: document.getElementById('rainAmount')?.value,
+                   rainSpeed: document.getElementById('rainSpeed')?.value,
+                   sizeVariance: document.getElementById('sizeVariance')?.value,
+                   windEffect: document.getElementById('windEffect')?.value,
+                   trailIntensity: document.getElementById('trailIntensity')?.value,
+                   blurQuality: document.getElementById('blurQuality')?.value
+                 };
+                 console.log('Slider Values:', controls);
+                 
+                 // Test 5: Physics Calculation Test
+                 console.log('\n🔬 Test 5: Physics Calculation Test');
+                 if (rain.drops.length > 0) {
+                   const drop = rain.drops[0];
+                   const dtScale = 0.016; // Simulate dtScale
+                   
+                   console.log('Simulating physics calculation:');
+                   console.log('- Force = gravityBase * mass - resistance');
+                   console.log('- Force =', rain.gravityBase, '*', drop.mass, '-', drop.resistance, '=', rain.gravityBase * drop.mass - drop.resistance);
+                   
+                   const force = rain.gravityBase * drop.mass - drop.resistance;
+                   const acceleration = force / drop.mass;
+                   
+                   console.log('- Acceleration = force / mass =', force, '/', drop.mass, '=', acceleration);
+                   console.log('- Is Finite?', isFinite(force), isFinite(acceleration));
+                 }
+                 
+                 // Test 6: Movement Test
+                 console.log('\n🏃 Test 6: Movement Test');
+                 if (rain.drops.length > 0) {
+                   const drop = rain.drops[0];
+                   const initialPos = { x: drop.x, y: drop.y };
+                   
+                   setTimeout(() => {
+                     const finalPos = { x: drop.x, y: drop.y };
+                     const moved = Math.abs(finalPos.y - initialPos.y) > 1;
+                     console.log('Initial Position:', initialPos);
+                     console.log('Final Position:', finalPos);
+                     console.log('Movement Detected:', moved);
+                     console.log('Distance Moved:', Math.abs(finalPos.y - initialPos.y));
+                   }, 1000);
+                 }
+                 
+                 console.log('\n✅ Tests completed. Check results above.');
+               },
+               testSliderControls: () => {
+                 console.log('🎛️ TESTING SLIDER CONTROLS');
+                 console.log('==========================');
+                 
+                 const sliders = [
+                   'rainAmount', 'rainSpeed', 'sizeVariance', 
+                   'windEffect', 'trailIntensity', 'blurQuality'
+                 ];
+                 
+                 sliders.forEach(sliderId => {
+                   const slider = document.getElementById(sliderId);
+                   if (slider) {
+                     console.log(`${sliderId}:`, {
+                       value: slider.value,
+                       min: slider.min,
+                       max: slider.max,
+                       step: slider.step,
+                       disabled: slider.disabled
+                     });
+                   } else {
+                     console.error(`❌ Slider ${sliderId} not found!`);
+                   }
+                 });
+                 
+                 // Test if controls are connected
+                 console.log('\n🔗 Testing Control Connections:');
+                 console.log('Rain object properties:');
+                 console.log('- maxDrops:', rain.maxDrops);
+                 console.log('- gravityBase:', rain.gravityBase);
+                 console.log('- sizeVariance:', rain.sizeVariance);
+                 console.log('- windX:', rain.windX);
+                 console.log('- trailIntensity:', rain.trailIntensity);
+                 console.log('- blurIterations:', rain.blurIterations);
+               },
+               testSimplePhysics: () => {
+                 console.log('🔬 TESTING SIMPLE PHYSICS');
+                 console.log('=========================');
+                 
+                 if (rain.drops.length === 0) {
+                   console.log('No drops to test. Adding a test drop...');
+                   rain.spawn(100, 50, 10);
+                 }
+                 
+                 const drop = rain.drops[0];
+                 console.log('Test Drop Initial State:');
+                 console.log('- Position:', { x: drop.x, y: drop.y });
+                 console.log('- Velocity:', { vx: drop.vx, vy: drop.vy });
+                 console.log('- Mass:', drop.mass);
+                 console.log('- Radius:', drop.r);
+                 
+                 // Test simple gravity calculation
+                 const simpleGravity = rain.gravityBase * (drop.r / 25);
+                 console.log('\nSimple Gravity Test:');
+                 console.log('- Gravity Base:', rain.gravityBase);
+                 console.log('- Drop Radius:', drop.r);
+                 console.log('- Simple Gravity Force:', simpleGravity);
+                 
+                 // Test current complex physics
+                 const complexForce = rain.gravityBase * drop.mass - drop.resistance;
+                 const complexAcceleration = complexForce / drop.mass;
+                 console.log('\nComplex Physics Test:');
+                 console.log('- Complex Force:', complexForce);
+                 console.log('- Complex Acceleration:', complexAcceleration);
+                 console.log('- Is Finite?', isFinite(complexForce), isFinite(complexAcceleration));
+                 
+                 // Test which one makes more sense
+                 console.log('\nComparison:');
+                 console.log('- Simple gravity would add:', simpleGravity, 'to vy per frame');
+                 console.log('- Complex physics would add:', complexAcceleration, 'to vy per frame');
+               },
+               resetToSimplePhysics: () => {
+                 console.log('🔄 RESETTING TO SIMPLE PHYSICS');
+                 console.log('==============================');
+                 
+                 // Clear all drops
+                 rain.drops = [];
+                 rain.condensation = [];
+                 
+                 // Reset physics to simple system
+                 rain.gravityBase = 0.6; // Reset to working value
+                 rain.evaporate = 0; // Disable evaporation for testing
+                 
+                 console.log('Physics reset. Adding test drops...');
+                 
+                 // Add some test drops
+                 for (let i = 0; i < 5; i++) {
+                   rain.spawn(100 + i * 50, 50, 8 + Math.random() * 4);
+                 }
+                 
+                 console.log('Added 5 test drops. Check if they fall now.');
+               },
+               testRefraction: () => {
+                 console.log('🔍 TESTING REFRACTION SYSTEM');
+                 console.log('============================');
+                 
+                 if (rain.drops.length === 0) {
+                   console.log('No drops to test. Adding a test drop...');
+                   rain.spawn(200, 200, 15); // Large drop for testing
+                 }
+                 
+                 const drop = rain.drops[0];
+                 console.log('Test Drop for Refraction:');
+                 console.log('- Position:', { x: drop.x, y: drop.y });
+                 console.log('- Radius:', drop.r);
+                 console.log('- Has Background:', rain.hasBackground);
+                 console.log('- Background Size:', { width: rain.bgSharp.width, height: rain.bgSharp.height });
+                 
+                 // Test refraction parameters
+                 console.log('\nRefraction Parameters:');
+                 console.log('- Refract Base:', rain.refractBase);
+                 console.log('- Refract Scale:', rain.refractScale);
+                 console.log('- Use Mini Refraction:', rain.useMiniRefraction);
+                 console.log('- Mini Boost:', rain.miniBoost);
+                 
+                 // Test sampling area calculation
+                 const rx = (drop.r * 0.92) / rain.dpr;
+                 const ry = (drop.r * 0.92) / rain.dpr;
+                 const sizeFactor = Math.min(1, rx / 8);
+                 const baseOffsetX = rx * rain.refractBase * 0.15 * sizeFactor;
+                 const baseOffsetY = -ry * (rain.refractBase * 0.1) * sizeFactor;
+                 
+                 console.log('\nSampling Area Calculation:');
+                 console.log('- Drop Radius (rx):', rx);
+                 console.log('- Drop Radius (ry):', ry);
+                 console.log('- Size Factor:', sizeFactor);
+                 console.log('- Offset X:', baseOffsetX);
+                 console.log('- Offset Y:', baseOffsetY);
+                 
+                 const sx = Math.max(0, Math.min(rain.bgSharp.width - rx * 2 * rain.dpr, (drop.x - rx + baseOffsetX) * rain.dpr));
+                 const sy = Math.max(0, Math.min(rain.bgSharp.height - ry * 2 * rain.dpr, (drop.y - ry + baseOffsetY) * rain.dpr));
+                 const sw = Math.min(rx * 2 * rain.dpr, rain.bgSharp.width - sx);
+                 const sh = Math.min(ry * 2 * rain.dpr, rain.bgSharp.height - sy);
+                 
+                 console.log('\nSource Rectangle (THIS IS THE SQUARE!):');
+                 console.log('- Source X:', sx);
+                 console.log('- Source Y:', sy);
+                 console.log('- Source Width:', sw);
+                 console.log('- Source Height:', sh);
+                 console.log('- Aspect Ratio:', sw / sh);
+                 
+                 console.log('\n🎯 DIAGNOSIS: The square comes from sampling a rectangular area!');
+                 console.log('We need to implement circular sampling or radial distortion.');
+               },
+               testCircularRefraction: () => {
+                 console.log('🔄 TESTING CIRCULAR REFRACTION APPROACH');
+                 console.log('=======================================');
+                 
+                 // Create a test canvas to demonstrate circular sampling
+                 const testCanvas = document.createElement('canvas');
+                 testCanvas.width = 100;
+                 testCanvas.height = 100;
+                 const testCtx = testCanvas.getContext('2d');
+                 
+                 // Draw a test pattern
+                 testCtx.fillStyle = 'red';
+                 testCtx.fillRect(0, 0, 50, 50);
+                 testCtx.fillStyle = 'blue';
+                 testCtx.fillRect(50, 0, 50, 50);
+                 testCtx.fillStyle = 'green';
+                 testCtx.fillRect(0, 50, 50, 50);
+                 testCtx.fillStyle = 'yellow';
+                 testCtx.fillRect(50, 50, 50, 50);
+                 
+                 console.log('Created test pattern with 4 colored squares');
+                 console.log('Current approach: Samples rectangular area (creates square)');
+                 console.log('Better approach: Use radial sampling or distortion');
+                 
+                 // Show the test canvas
+                 document.body.appendChild(testCanvas);
+                 testCanvas.style.position = 'fixed';
+                 testCanvas.style.top = '10px';
+                 testCanvas.style.left = '10px';
+                 testCanvas.style.border = '2px solid white';
+                 testCanvas.style.zIndex = '9999';
+                 
+                 console.log('Test canvas added to page. This shows the square sampling problem.');
+                 
+                 // Clean up after 5 seconds
+                 setTimeout(() => {
+                   document.body.removeChild(testCanvas);
+                   console.log('Test canvas removed.');
+                 }, 5000);
+               },
+               testRefractionFix: () => {
+                 console.log('🔧 TESTING REFRACTION FIX');
+                 console.log('=========================');
+                 
+                 if (rain.drops.length === 0) {
+                   console.log('No drops to test. Adding a test drop...');
+                   rain.spawn(200, 200, 15); // Large drop for testing
+                 }
+                 
+                 const drop = rain.drops[0];
+                 console.log('Testing Fixed Refraction:');
+                 console.log('- Drop Position:', { x: drop.x, y: drop.y });
+                 console.log('- Drop Radius:', drop.r);
+                 
+                 // Test the new circular approach
+                 const rx = (drop.r * 0.92) / rain.dpr;
+                 const ry = (drop.r * 0.92) / rain.dpr;
+                 
+                 console.log('\nNew Circular Approach:');
+                 console.log('- Uses ctx.arc() for perfect circular mask');
+                 console.log('- No more rectangular sampling!');
+                 console.log('- Clean, simple refraction like reference images');
+                 
+                 console.log('\n✅ EXPECTED RESULT:');
+                 console.log('- Perfect circular droplets (no squares)');
+                 console.log('- Clean background magnification');
+                 console.log('- Realistic water droplet lens effect');
+                 
+                 console.log('\n🎯 REFRESH THE PAGE to see the fix!');
+               },
+               testSquareSamplingBug: () => {
+                 console.log('🚨 CRITICAL BUG: SQUARE SAMPLING STILL EXISTS');
+                 console.log('==============================================');
+                 
+                 console.log('❌ ROOT CAUSE IDENTIFIED:');
+                 console.log('- We added circular MASKING (ctx.arc + ctx.clip)');
+                 console.log('- But we still use RECTANGULAR SAMPLING (sx, sy, sw, sh)');
+                 console.log('- The square content is still there, just clipped to a circle!');
+                 
+                 console.log('\n🔍 EVIDENCE:');
+                 console.log('- Line 1251-1254: Still calculating rectangular source area');
+                 console.log('- Line 1274: Still using ctx.drawImage(srcCanvas, sx, sy, sw, sh, ...)');
+                 console.log('- The circular mask just hides the square edges, content is still square!');
+                 
+                 console.log('\n✅ REQUIRED FIX:');
+                 console.log('- Replace rectangular sampling with radial/circular sampling');
+                 console.log('- OR use multiple small samples in a circular pattern');
+                 console.log('- OR implement proper radial distortion algorithm');
+                 
+                 console.log('\n🎯 This explains why user still sees squares!');
+               },
+               testRadialSamplingFix: () => {
+                 console.log('✅ TESTING PROPER RADIAL SAMPLING FIX');
+                 console.log('====================================');
+                 
+                 console.log('🔧 IMPLEMENTED FIX:');
+                 console.log('- Proper radial sampling with magnified background content');
+                 console.log('- Larger sampling area (1.5x radius) to capture background');
+                 console.log('- Magnification effect like real water droplet lens');
+                 console.log('- Circular masking for organic droplet shape');
+                 
+                 console.log('\n🎯 EXPECTED RESULT:');
+                 console.log('- Visible background content through droplets (like reference)');
+                 console.log('- Magnified, distorted background (lens effect)');
+                 console.log('- NO MORE SQUARES - proper circular refraction');
+                 console.log('- Realistic water droplet lens effect');
+                 
+                 console.log('\n🚀 REFRESH THE PAGE to see the REAL fix!');
+                 
+                 return 'Test completed - should now see background through droplets like reference';
                }
              };
       

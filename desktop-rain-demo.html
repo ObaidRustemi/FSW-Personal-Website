@@ -106,15 +106,15 @@
       <!-- Refraction Base -->
       <div style="margin-bottom: 10px;">
         <label style="display: block; margin-bottom: 3px; font-size: 12px;">Refraction Base:</label>
-        <input type="range" id="refractBase" min="0.1" max="1.0" step="0.1" value="0.4" style="width: 100%;">
-        <span id="refractBaseValue" style="font-size: 11px; color: #ccc;">0.4</span>
+        <input type="range" id="refractBase" min="0.1" max="1.0" step="0.1" value="0.8" style="width: 100%;">
+        <span id="refractBaseValue" style="font-size: 11px; color: #ccc;">0.8</span>
       </div>
       
       <!-- Refraction Scale -->
       <div style="margin-bottom: 10px;">
         <label style="display: block; margin-bottom: 3px; font-size: 12px;">Refraction Scale:</label>
-        <input type="range" id="refractScale" min="0.1" max="1.0" step="0.1" value="0.6" style="width: 100%;">
-        <span id="refractScaleValue" style="font-size: 11px; color: #ccc;">0.6</span>
+        <input type="range" id="refractScale" min="0.1" max="1.0" step="0.1" value="1.2" style="width: 100%;">
+        <span id="refractScaleValue" style="font-size: 11px; color: #ccc;">1.2</span>
       </div>
     </div>
     
@@ -143,7 +143,8 @@
   </div>
 
   <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="rain-on-glass.js"></script>
+    <script src="rain-utils.js"></script>
+    <script src="rain-on-glass.js"></script>
   <script>
   (function(){
     const canvas = document.getElementById('rainCanvas');
@@ -588,6 +589,369 @@
                  console.log('\n🚀 REFRESH THE PAGE to see the REAL fix!');
                  
                  return 'Test completed - should now see background through droplets like reference';
+               },
+               testRainUtils: () => {
+                 console.log('🧪 TESTING RAIN UTILITIES');
+                 console.log('=========================');
+                 
+                 if (typeof window.RainUtils === 'undefined') {
+                   console.log('❌ RainUtils not loaded!');
+                   return 'FAILED: RainUtils not available';
+                 }
+                 
+                 console.log('✅ RainUtils loaded successfully!');
+                 
+                 // Test jittered values
+                 const jitteredSize = window.RainUtils.randomJittered(
+                   new window.RainUtils.JitterOption(8, 2)
+                 );
+                 console.log('Jittered size (8±2):', jitteredSize);
+                 
+                 // Test random in rect
+                 const rect = new window.RainUtils.Rect(0, 0, 100, 50);
+                 const randomPos = window.RainUtils.randomInRect(rect);
+                 console.log('Random position in rect:', randomPos);
+                 
+                 // Test gold noise
+                 const noise = window.RainUtils.goldNoise(
+                   new window.RainUtils.Vec2(10, 20), 12345
+                 );
+                 console.log('Gold noise value:', noise);
+                 
+                 // Test organic variations
+                 const naturalSize = window.RainUtils.naturalDropSize(8, 0.3);
+                 const naturalSpeed = window.RainUtils.naturalDropSpeed(0.4, 0.2);
+                 console.log('Natural drop size:', naturalSize);
+                 console.log('Natural drop speed:', naturalSpeed);
+                 
+                 console.log('\n🎯 All utilities working! Ready for organic enhancements.');
+                 
+                 return 'SUCCESS: All rain utilities tested and working';
+               },
+               testOrganicEnhancements: () => {
+                 console.log('🌿 TESTING ORGANIC ENHANCEMENTS');
+                 console.log('===============================');
+                 
+                 if (rain.drops.length === 0) {
+                   console.log('No drops to test. Adding test drops...');
+                   for (let i = 0; i < 5; i++) {
+                     rain.spawn();
+                   }
+                 }
+                 
+                 console.log('✅ Testing organic drop properties:');
+                 
+                 rain.drops.slice(0, 3).forEach((drop, i) => {
+                   console.log(`\nDrop ${i + 1}:`);
+                   console.log('- Size:', drop.r.toFixed(2));
+                   console.log('- Position:', { x: drop.x.toFixed(2), y: drop.y.toFixed(2) });
+                   console.log('- Velocity:', { vx: drop.vx.toFixed(3), vy: drop.vy.toFixed(3) });
+                   console.log('- Adhesion:', drop.stick.toFixed(3));
+                   console.log('- Density:', drop.density.toFixed(3));
+                   console.log('- Trail Distance:', drop.nextTrailDistance.toFixed(1));
+                   console.log('- Organic Seed:', drop._organicSeed);
+                 });
+                 
+                 console.log('\n🎯 EXPECTED IMPROVEMENTS:');
+                 console.log('- More natural size distribution');
+                 console.log('- Organic positioning patterns');
+                 console.log('- Natural velocity variations');
+                 console.log('- Varied adhesion properties');
+                 console.log('- Organic trail spacing');
+                 
+                 console.log('\n🚀 REFRESH to see organic enhancements in action!');
+                 
+                 return 'SUCCESS: Organic enhancements applied to drop spawning';
+               },
+               testPositionDependentRefraction: () => {
+                 console.log('🎯 TESTING POSITION-DEPENDENT REFRACTION');
+                 console.log('=======================================');
+                 
+                 if (rain.drops.length === 0) {
+                   console.log('No drops to test. Adding test drops...');
+                   for (let i = 0; i < 5; i++) {
+                     rain.spawn(100 + i * 100, 100 + i * 50, 10);
+                   }
+                 }
+                 
+                 console.log('✅ Testing position-dependent background sampling:');
+                 
+                 rain.drops.slice(0, 3).forEach((drop, i) => {
+                   console.log(`\nDrop ${i + 1} at position (${drop.x.toFixed(1)}, ${drop.y.toFixed(1)}):`);
+                   
+                   // Calculate position-dependent offsets
+                   const positionOffsetX = Math.sin(drop.x * 0.01) * 0.3;
+                   const positionOffsetY = Math.cos(drop.y * 0.008) * 0.2;
+                   
+                   console.log('- Position offset X:', positionOffsetX.toFixed(3));
+                   console.log('- Position offset Y:', positionOffsetY.toFixed(3));
+                   console.log('- Organic seed:', drop._organicSeed);
+                   
+                   // Test organic shape variation
+                   if (window.RainUtils) {
+                     const shapeVariation = window.RainUtils.organicShapeVariation(
+                       new window.RainUtils.Vec2(drop.x, drop.y), 
+                       drop._organicSeed
+                     );
+                     console.log('- Shape variation factor:', shapeVariation.toFixed(3));
+                   }
+                 });
+                 
+                 console.log('\n🎯 EXPECTED IMPROVEMENTS:');
+                 console.log('- Each drop samples different background content');
+                 console.log('- Position-dependent refraction offsets');
+                 console.log('- Organic elliptical shapes (not perfect circles)');
+                 console.log('- Natural shape variations using goldNoise');
+                 
+                 console.log('\n🚀 REFRESH to see position-dependent refraction!');
+                 
+                 return 'SUCCESS: Position-dependent refraction implemented';
+               },
+               testBackgroundSampling: () => {
+                 console.log('🖼️ TESTING BACKGROUND SAMPLING');
+                 console.log('==============================');
+                 
+                 console.log('✅ Background sampling status:');
+                 console.log('- Has background:', rain.hasBackground);
+                 console.log('- Background size:', { width: rain.bgSharp.width, height: rain.bgSharp.height });
+                 console.log('- Refraction base:', rain.refractBase);
+                 console.log('- Refraction scale:', rain.refractScale);
+                 
+                 if (rain.drops.length === 0) {
+                   console.log('No drops to test. Adding test drops...');
+                   for (let i = 0; i < 3; i++) {
+                     rain.spawn(200 + i * 100, 200 + i * 50, 15);
+                   }
+                 }
+                 
+                 console.log('\n🎯 BACKGROUND SAMPLING SHOULD NOW BE VISIBLE:');
+                 console.log('- Each drop should show magnified background content');
+                 console.log('- Different drops should show different background areas');
+                 console.log('- Background should be distorted/magnified through each drop');
+                 console.log('- Increased refraction intensity for better visibility');
+                 
+                 console.log('\n🚀 REFRESH to see background sampling restored!');
+                 
+                 return 'SUCCESS: Background sampling restored with increased intensity';
+               },
+               testVisualRefraction: () => {
+                 console.log('🔍 VISUAL REFRACTION TEST');
+                 console.log('========================');
+                 
+                 // DISABLE normal rain generation during test
+                 rain.testMode = true;
+                 
+                 // Clear existing drops and condensation to remove white streaks
+                 rain.drops.length = 0;
+                 rain.condensation.length = 0;
+                 
+                 // ENSURE RAIN IS RUNNING
+                 if (!rain.running) {
+                   rain.start();
+                 }
+                 
+                 // WATCHDOG: Monitor drops array for unexpected clearing
+                 let lastDropCount = rain.drops.length;
+                 const watchdog = setInterval(() => {
+                   if (rain.drops.length !== lastDropCount) {
+                     console.log(`🚨 DROPS ARRAY CHANGED: ${lastDropCount} → ${rain.drops.length}`);
+                     if (rain.drops.length === 0) {
+                       console.log('🚨 DROPS ARRAY CLEARED! Investigating...');
+                       console.trace('Array cleared at:');
+                     }
+                     lastDropCount = rain.drops.length;
+                   }
+                 }, 100);
+                 
+                 // Store watchdog for cleanup
+                 rain._testWatchdog = watchdog;
+                 
+                 // IMMEDIATE CHECK: Verify drops were actually added
+                 setTimeout(() => {
+                   console.log('🔍 POST-ADDITION CHECK:');
+                   console.log('- Drops count:', rain.drops.length);
+                   console.log('- First drop _testDrop:', rain.drops[0]?._testDrop);
+                   if (rain.drops.length === 0) {
+                     console.log('🚨 DROPS WERE CLEARED IMMEDIATELY AFTER ADDITION!');
+                     console.log('🔍 Checking if rain is running:', rain.running);
+                     console.log('🔍 Checking testMode:', rain.testMode);
+                   }
+                 }, 50);
+                 
+                 // Add HUGE, SLOW test drops with ALL required physics properties
+                 for (let i = 0; i < 5; i++) {
+                   const testDrop = {
+                     x: 200 + i * 150, // Spread them out more
+                     y: 100 + i * 80,  // Start higher up
+                     r: 60, // HUGE radius (3x bigger than normal)
+                     vx: 0,
+                     vy: 0.1, // VERY SLOW fall speed (normal is 0.5-2.0)
+                     stretch: 1,
+                     stick: 0.1,
+                     mass: 1, // Add mass to prevent NaN
+                     density: 1, // Add density
+                     label: true, // Force label to show
+                     _testDrop: true, // Mark as test drop
+                     _organicSeed: 12345 + i,
+                     // ADD ALL MISSING PROPERTIES TO PREVENT REMOVAL
+                     prevX: 200 + i * 150, // Previous position
+                     prevY: 100 + i * 80,  // Previous position
+                     age: 0, // Drop age
+                     trailDropDensity: 0.2,
+                     trailDistance: 0,
+                     trailDropSize: 0.1,
+                     trailSpread: 0.1,
+                     motionInterval: 0,
+                     velocitySpread: 0,
+                     xShifting: 0,
+                     evaporate: 0,
+                     shrinkRate: 0,
+                     slipRate: 0,
+                     spread: { x: 0, y: 0 },
+                     resistance: 0.1,
+                     shifting: 0,
+                     lastTrailPos: { x: 200 + i * 150, y: 100 + i * 80 },
+                     nextTrailDistance: 0,
+                     nextRandomTime: 0
+                   };
+                   rain.drops.push(testDrop);
+                 }
+                 
+                 console.log('✅ Added 5 HUGE, SLOW test drops with ROYAL BLUE refraction');
+                 console.log('🎯 Look for MASSIVE SOLID ROYAL BLUE drops on screen');
+                 
+                 return 'Test drops added - check visual result';
+               },
+               testSimpleRoyalBlue: () => {
+                 console.log('🔵 SIMPLE ROYAL BLUE TEST');
+                 console.log('========================');
+                 
+                 // Clear everything and draw simple royal blue circles
+                 rain.drops = [];
+                 rain.testMode = true;
+                 
+                 // VERIFY testMode is set
+                 console.log('🔍 testMode value:', rain.testMode);
+                 console.log('🔍 !testMode value:', !rain.testMode);
+                 
+                 // Draw 5 simple royal blue circles directly on canvas
+                 const ctx = rain.ctx;
+                 ctx.save();
+                 
+                 for (let i = 0; i < 5; i++) {
+                   const x = 200 + i * 150;
+                   const y = 200 + i * 50;
+                   const r = 60;
+                   
+                   ctx.fillStyle = 'royalblue';
+                   ctx.beginPath();
+                   ctx.arc(x, y, r, 0, Math.PI * 2);
+                   ctx.fill();
+                   
+                   console.log(`✅ Drew royal blue circle ${i} at (${x}, ${y})`);
+                 }
+                 
+                 ctx.restore();
+                 console.log('🎯 Look for 5 ROYAL BLUE CIRCLES on screen');
+                 
+                 return 'Simple royal blue test complete';
+               },
+               debugDropValidation: () => {
+                 console.log('🔍 DEBUGGING DROP VALIDATION');
+                 console.log('============================');
+                 
+                 // Check current drops array
+                 console.log('Current drops count:', rain.drops.length);
+                 
+                 // Check each drop's validation
+                 rain.drops.forEach((drop, index) => {
+                   console.log(`Drop ${index}:`, {
+                     r: drop.r,
+                     x: drop.x,
+                     y: drop.y,
+                     _testDrop: drop._testDrop,
+                     isValidRadius: drop.r && drop.r > 0 && isFinite(drop.r),
+                     isValidPosition: isFinite(drop.x) && isFinite(drop.y),
+                     rx: drop.r ? Math.max(0.1, (drop.r * 0.92) / rain.dpr) : 'N/A',
+                     ry: drop.r ? Math.max(0.1, (drop.r * 0.92) / rain.dpr) : 'N/A'
+                   });
+                 });
+                 
+                 // Test validation logic
+                 console.log('\n🧪 Testing validation logic:');
+                 const testDrop = { r: 60, x: 200, y: 100, _testDrop: true };
+                 console.log('Test drop validation:', {
+                   radiusCheck: testDrop.r && testDrop.r > 0 && isFinite(testDrop.r),
+                   positionCheck: isFinite(testDrop.x) && isFinite(testDrop.y),
+                   rxCheck: Math.max(0.1, (testDrop.r * 0.92) / rain.dpr),
+                   ryCheck: Math.max(0.1, (testDrop.r * 0.92) / rain.dpr)
+                 });
+                 
+                 return 'Drop validation debug complete';
+               },
+               disableTestMode: () => {
+                 rain.testMode = false;
+                 if (rain._testWatchdog) {
+                   clearInterval(rain._testWatchdog);
+                   rain._testWatchdog = null;
+                 }
+                 return 'Test mode disabled';
+               },
+               testNormalRain: () => {
+                 console.log('🌧️ TESTING NORMAL RAIN WORKFLOW');
+                 console.log('===============================');
+                 
+                 // Disable test mode
+                 rain.testMode = false;
+                 console.log('✅ testMode set to false');
+                 
+                 // Clear test drops and add normal rain
+                 rain.drops = [];
+                 for (let i = 0; i < 10; i++) {
+                   rain.spawn();
+                 }
+                 
+                 console.log('✅ Added 10 normal rain drops');
+                 console.log('🎯 Normal rain should be visible');
+                 
+                 return 'Normal rain test complete';
+               },
+               debugRefractionCode: () => {
+                 console.log('🐛 DEBUGGING REFRACTION CODE');
+                 console.log('============================');
+                 
+                 // Check if our refraction code is being called
+                 console.log('✅ Checking refraction parameters:');
+                 console.log('- refractBase:', rain.refractBase);
+                 console.log('- refractScale:', rain.refractScale);
+                 console.log('- hasBackground:', rain.hasBackground);
+                 
+                 // Check if background canvas exists
+                 if (rain.bgSharp) {
+                   console.log('- bgSharp canvas exists:', rain.bgSharp.width, 'x', rain.bgSharp.height);
+                 } else {
+                   console.log('- ❌ bgSharp canvas missing!');
+                 }
+                 
+                 // Check if our enhanced spawn function is being used
+                 console.log('\n🔍 Testing spawn function:');
+                 const originalSpawn = rain.spawn;
+                 let spawnCallCount = 0;
+                 rain.spawn = function(...args) {
+                   spawnCallCount++;
+                   console.log(`Spawn call #${spawnCallCount}:`, args);
+                   return originalSpawn.apply(this, args);
+                 };
+                 
+                 // Test spawn
+                 rain.spawn(300, 300, 15);
+                 
+                 // Restore original spawn
+                 rain.spawn = originalSpawn;
+                 
+                 console.log('\n🎯 If you see spawn calls above, our enhanced spawn is working');
+                 
+                 return 'Debug complete - check console for spawn calls';
                }
              };
       

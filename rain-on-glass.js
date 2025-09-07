@@ -17,6 +17,7 @@ class RainOnGlass {
     this.running = false;
     this.last = 0;
     this.hasBackground = false;
+    this.testMode = false; // Initialize testMode property
 
     // offscreen buffers for sharp/blurred background
     this.bgSharp = document.createElement('canvas');
@@ -90,9 +91,9 @@ class RainOnGlass {
                      Number(q.get('xShiftMax')) || options.xShifting?.[1] || 0.1]; // horizontal drift range
     this.slipRate = Number(q.get('slipRate')) || options.slipRate || 0.1; // slip rate for random motion
     
-    // Advanced rendering parameters
-    this.refractBase = Number(q.get('refractBase')) || options.refractBase || 0.2; // base refraction strength (reduced for realism)
-    this.refractScale = Number(q.get('refractScale')) || options.refractScale || 0.4; // refraction scaling (reduced for realism)
+    // Advanced rendering parameters - Enhanced for micro-lens effect
+    this.refractBase = Number(q.get('refractBase')) || options.refractBase || 0.8; // base refraction strength (increased for stronger lens effect)
+    this.refractScale = Number(q.get('refractScale')) || options.refractScale || 1.2; // refraction scaling (increased for stronger lens effect)
     this.raindropLightPos = options.raindropLightPos || [-1, 1, 2, 0]; // light position for highlights
     this.raindropDiffuseLight = options.raindropDiffuseLight || [0.2, 0.2, 0.2]; // diffuse lighting
     this.raindropShadowOffset = Number(q.get('shadowOffset')) || options.raindropShadowOffset || 0.8; // shadow offset
@@ -471,21 +472,27 @@ class RainOnGlass {
 
 
   spawn(x, y, r) {
-    // Better size distribution - mix of small, medium, and large drops
+    // Organic size distribution using natural variations
     let radius;
     if (r) {
       radius = r;
     } else {
-      const sizeRand = Math.random();
-      if (sizeRand < 0.3) {
-        // Small drops (30%)
-        radius = 4 + Math.random() * 4;
-      } else if (sizeRand < 0.8) {
-        // Medium drops (50%)
-        radius = 8 + Math.random() * 8;
+      // Use natural drop size variations
+      const baseSize = 8; // Base medium drop size
+      const sizeVariation = 0.4; // 40% variation
+      radius = window.RainUtils?.naturalDropSize(baseSize, sizeVariation) || (baseSize + Math.random() * baseSize * sizeVariation);
+      
+      // More random size distribution with higher variation
+      const sizeCategory = Math.random();
+      if (sizeCategory < 0.4) {
+        // Small drops (40%) - 3-10px base with high variation
+        radius = window.RainUtils?.naturalDropSize(6, 0.6) || (6 + Math.random() * 4);
+      } else if (sizeCategory < 0.8) {
+        // Medium drops (40%) - 8-20px base with high variation
+        radius = window.RainUtils?.naturalDropSize(14, 0.5) || (14 + Math.random() * 6);
       } else {
-        // Large drops (20%)
-        radius = 16 + Math.random() * 10;
+        // Large drops (20%) - 15-30px base with high variation
+        radius = window.RainUtils?.naturalDropSize(22, 0.4) || (22 + Math.random() * 8);
       }
       radius *= this.dpr * this.sizeVariance; // Apply size variance multiplier
     }
@@ -493,33 +500,56 @@ class RainOnGlass {
     // Ensure minimum radius to prevent rendering errors
     radius = Math.max(0.5, radius);
     
-    const spawnX = x ?? (radius + Math.random() * (this.canvas.width - 2 * radius));
+    // Organic positioning using randomInRect for more natural distribution
+    let spawnX, spawnY;
+    if (x !== undefined) {
+      spawnX = x;
+    } else {
+      // Use organic positioning within spawn area
+      const spawnRect = window.RainUtils ? new window.RainUtils.Rect(radius, 0, this.canvas.width - 2 * radius, 50) : null;
+      const organicPos = window.RainUtils ? window.RainUtils.randomInRect(spawnRect) : null;
+      spawnX = organicPos ? organicPos.x : (radius + Math.random() * (this.canvas.width - 2 * radius));
+    }
+    
+    if (y !== undefined) {
+      spawnY = y;
+    } else {
+      // Organic Y positioning with natural variation
+      const baseY = -radius - 50;
+      const yVariation = window.RainUtils?.randomRange(0, 100) || Math.random() * 100;
+      spawnY = baseY - yVariation * this.dpr;
+    }
     
     this.drops.push({
       x: spawnX,
-      y: y ?? (-radius - Math.random() * 100 * this.dpr),  // Scale initial Y by DPR too
+      y: spawnY,
       r: radius,
-      vx: (Math.random() - 0.5) * 0.3,
+      // More random velocity variations
+      vx: window.RainUtils?.randomRange(-0.8, 0.8) || ((Math.random() - 0.5) * 0.8),
       vy: 0,
       stretch: 1,
-      stick: this.adhesionBase + Math.random() * 0.06,
+      // More random adhesion with higher variation
+      stick: window.RainUtils?.randomJittered(new window.RainUtils.JitterOption(this.adhesionBase, 0.15)) || (this.adhesionBase + Math.random() * 0.15),
       label: (urlParams.get('debugRain') === '1') && Math.random() < 0.2,
       shapePoints: null,
       _shapeDirty: false,
-      // Enhanced physics properties
+      // Enhanced physics properties with organic variations
       mass: radius * radius, // mass ∝ r²
       prevX: spawnX,
-      prevY: y ?? (-radius - Math.random() * 100 * this.dpr),
+      prevY: spawnY,
       adhesion: this.adhesionBase,
       _trailAccumulated: 0,
-      // Advanced physics properties (inspired by RainDrop class)
-      density: 1.0, // Base density
+      // Advanced physics properties with natural variations
+      density: window.RainUtils?.randomJittered(new window.RainUtils.JitterOption(1.0, 0.1)) || 1.0, // Organic density variation
       spread: { x: 0, y: 0 }, // Shape deformation
       resistance: 0, // Dynamic friction
       shifting: 0, // Horizontal drift
-      lastTrailPos: { x: spawnX, y: y ?? (-radius - Math.random() * 100 * this.dpr) },
-      nextTrailDistance: 20 + Math.random() * 20, // Dynamic trail spacing
-      nextRandomTime: 0 // Random motion timing
+      lastTrailPos: { x: spawnX, y: spawnY },
+      // Organic trail spacing with natural variation
+      nextTrailDistance: window.RainUtils?.randomRange(15, 35) || (20 + Math.random() * 20),
+      nextRandomTime: 0, // Random motion timing
+      // Unique seed for organic variations
+      _organicSeed: Math.floor(Math.random() * 10000)
     });
   }
 
@@ -620,7 +650,7 @@ class RainOnGlass {
   }
 
   spawnCondensation() {
-    if (!this.enableCondensation || this.condensation.length >= 3000) return; // Increased limit
+    if (!this.enableCondensation || this.testMode || this.condensation.length >= 3000) return; // Increased limit
     
     // Spawn dense micro-condensation like the reference implementation
     const count = Math.floor(this.condensationDensity * 40 * Math.random()); // Much higher density
@@ -665,16 +695,19 @@ class RainOnGlass {
       const midY = (prevY + drop.y) / 2;
       
       this.trailCtx.save();
-      this.trailCtx.strokeStyle = `rgba(255,255,255,${alpha})`;
-      this.trailCtx.lineWidth = w;
-      this.trailCtx.lineCap = 'round';
-      this.trailCtx.globalCompositeOperation = 'lighter';
-      
-      // Draw curved trail for more natural water flow
-      this.trailCtx.beginPath();
-      this.trailCtx.moveTo(prevX, prevY);
-      this.trailCtx.quadraticCurveTo(midX, midY, drop.x, drop.y);
-      this.trailCtx.stroke();
+      // Skip white trail strokes in test mode
+      if (!this.testMode) {
+        this.trailCtx.strokeStyle = `rgba(255,255,255,${alpha})`;
+        this.trailCtx.lineWidth = w;
+        this.trailCtx.lineCap = 'round';
+        this.trailCtx.globalCompositeOperation = 'lighter';
+        
+        // Draw curved trail for more natural water flow
+        this.trailCtx.beginPath();
+        this.trailCtx.moveTo(prevX, prevY);
+        this.trailCtx.quadraticCurveTo(midX, midY, drop.x, drop.y);
+        this.trailCtx.stroke();
+      }
       this.trailCtx.restore();
       
       // Spawn trail droplets occasionally (inspired by RaindropFX)
@@ -781,10 +814,12 @@ class RainOnGlass {
         this.randomMotion(d);
       }
       
-      // Evaporation (mass decreases over time) - prevent negative mass
-      d.mass = Math.max(0, d.mass - this.evaporate * dtScale);
-      if (d.mass <= 0) {
-        d._dead = true;
+      // Evaporation (mass decreases over time) - prevent negative mass (skip for test drops)
+      if (!d._testDrop) {
+        d.mass = Math.max(0, d.mass - this.evaporate * dtScale);
+        if (d.mass <= 0) {
+          d._dead = true;
+        }
       }
       
       // Skip physics calculations for dead drops
@@ -804,8 +839,8 @@ class RainOnGlass {
       const force = this.gravityBase * d.mass - d.resistance;
       const acceleration = force / d.mass;
       
-      // Validate physics calculations
-      if (!isFinite(force) || !isFinite(acceleration) || !isFinite(d.mass) || d.mass <= 0) {
+      // Validate physics calculations (skip for test drops)
+      if (!d._testDrop && (!isFinite(force) || !isFinite(acceleration) || !isFinite(d.mass) || d.mass <= 0)) {
         console.warn('Invalid physics values for drop', i, 'force:', force, 'acceleration:', acceleration, 'mass:', d.mass);
         d._dead = true; // Mark as dead instead of trying to fix
         continue;
@@ -888,18 +923,20 @@ class RainOnGlass {
       d.x += d.vx * dtScale;
       d.y += d.vy * dtScale;
       
-      // Advanced physics: evaporation and shrinking (inspired by RaindropFX)
-      if (d._isTrailDroplet) {
-        // Trail droplets evaporate faster
-        d.r = Math.max(0, d.r - this.evaporate * dtScale * 0.1);
-        if (d.r <= 0.5) {
-          d._dead = true;
-        }
-      } else {
-        // Regular droplets shrink slowly
-        d.r = Math.max(0, d.r - this.shrinkRate * dtScale);
-        if (d.r <= 1) {
-          d._dead = true;
+      // Advanced physics: evaporation and shrinking (inspired by RaindropFX) (skip for test drops)
+      if (!d._testDrop) {
+        if (d._isTrailDroplet) {
+          // Trail droplets evaporate faster
+          d.r = Math.max(0, d.r - this.evaporate * dtScale * 0.1);
+          if (d.r <= 0.5) {
+            d._dead = true;
+          }
+        } else {
+          // Regular droplets shrink slowly
+          d.r = Math.max(0, d.r - this.shrinkRate * dtScale);
+          if (d.r <= 1) {
+            d._dead = true;
+          }
         }
       }
       
@@ -926,8 +963,8 @@ class RainOnGlass {
       d._shapeDirty = speed < 1.5 * this.dpr;
       // Position already updated in the new physics system above
       
-      // remove only when fully off-screen; allow reach to bottom
-      if (d.y - d.r > this.canvas.height + 5) this.drops.splice(i, 1);
+      // remove only when fully off-screen; allow reach to bottom (skip for test drops)
+      if (!d._testDrop && d.y - d.r > this.canvas.height + 5) this.drops.splice(i, 1);
       // mark for smudge trail if moved enough
       if (this.enableSmudgeTrail) {
         if (d._trailY === undefined) d._trailY = d.y;
@@ -1034,8 +1071,8 @@ class RainOnGlass {
     }
     }
 
-    // Update condensation droplets
-    if (this.enableCondensation) {
+    // Update condensation droplets (skip in test mode)
+    if (this.enableCondensation && !this.testMode) {
       for (let i = this.condensation.length - 1; i >= 0; i--) {
         const c = this.condensation[i];
         c.age += dt;
@@ -1077,6 +1114,10 @@ class RainOnGlass {
       this._spawnAcc[p] += (preset.rate || 0) * dt;
       while (this._spawnAcc[p] >= 1 && this.drops.length < this.maxDrops) {
         this._spawnAcc[p] -= 1;
+        // Skip normal rain generation during test mode
+        if (this.testMode) {
+          break;
+        }
         const r = (preset.min + Math.random() * (preset.base || 1)) * this.dpr;
         this.spawn(undefined, undefined, r);
       }
@@ -1123,12 +1164,17 @@ class RainOnGlass {
   render() {
     try {
     const ctx = this.ctx;
-    this.clear();
+    // Don't clear canvas during test mode to preserve test drawings
+    if (!this.testMode) {
+      this.clear();
+    } else {
+      console.log('🔍 TEST MODE: Canvas NOT cleared');
+    }
       // Draw in CSS pixel coordinates; scale context to DPR
       ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
     // Atmospheric fog overlay (subtle vertical gradient)
-    if (!TEST_MODE && this.fogEnabled && this.fogStrength > 0) {
+    if (!TEST_MODE && !this.testMode && this.fogEnabled && this.fogStrength > 0) {
       const W = this.canvas.width / this.dpr;
       const H = this.canvas.height / this.dpr;
       const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -1142,8 +1188,14 @@ class RainOnGlass {
 
     // draw droplets with refraction
     for (const d of this.drops) {
+      // Test drop validation (silent)
+      if (d._testDrop) {
+        // Validation passed - no logging needed
+      }
+      
       // Skip droplets with invalid radius (prevent createRadialGradient errors)
       if (!d.r || d.r <= 0 || !isFinite(d.r)) {
+        if (d._testDrop) console.log('❌ TEST DROP REJECTED: Invalid radius');
         continue;
       }
       
@@ -1152,6 +1204,7 @@ class RainOnGlass {
       
       // Validate that x and y are finite numbers
       if (!isFinite(x) || !isFinite(y)) {
+        if (d._testDrop) console.log('❌ TEST DROP REJECTED: Invalid position');
         continue;
       }
       // Enhanced droplet shape calculation using spread system (inspired by RainDrop class)
@@ -1161,6 +1214,7 @@ class RainOnGlass {
       
       // Validate that rx and ry are finite numbers
       if (!isFinite(rx) || !isFinite(ry) || rx <= 0 || ry <= 0) {
+        if (d._testDrop) console.log('❌ TEST DROP REJECTED: Invalid rx/ry', { rx, ry });
         continue;
       }
 
@@ -1221,17 +1275,17 @@ class RainOnGlass {
       }
       ctx.clip();
       
-      // Draw refracted background inside droplet (skip for very small drops for performance)
+      // NEW ENHANCED REFRACTION: Position-dependent background sampling with organic shapes
       if (this.hasBackground && this.bgSharp.width > 0 && this.bgSharp.height > 0 && rx > 2) {
-        // Optimized refraction parameters for realistic water droplets
+        // Enhanced refraction parameters for micro-lens effect (inspired by ChatGPT analysis)
         const sizeFactor = Math.min(1, rx / 8); // Scale effect by droplet size
-        const baseOffsetX = rx * this.refractBase * 0.15 * sizeFactor;  // Even more subtle horizontal distortion
-        const baseOffsetY = -ry * (this.refractBase * 0.1) * sizeFactor; // Even more subtle vertical distortion
-        const baseMag = 1.005 + (0.005 * sizeFactor);  // Very subtle magnification for realism
-        const boost = (this.useMiniRefraction && this.miniBoost) ? this.miniOffsetScale * 0.3 * sizeFactor : 1; // Further reduced boost
-        const offsetX = baseOffsetX * boost * this.refractScale;   // More subtle horizontal refraction
-        const offsetY = baseOffsetY * boost * this.refractScale;   // More subtle vertical refraction
-        const mag = (this.useMiniRefraction && this.miniBoost) ? Math.min(1.01, this.miniMagnification * 0.3 * sizeFactor) : baseMag; // Very subtle magnification
+        const baseOffsetX = rx * this.refractBase * 0.5 * sizeFactor;  // Stronger horizontal distortion for micro-lens
+        const baseOffsetY = -ry * (this.refractBase * 0.4) * sizeFactor; // Stronger vertical distortion for micro-lens
+        const baseMag = 1.05 + (0.02 * sizeFactor);  // Stronger magnification for micro-lens effect
+        const boost = (this.useMiniRefraction && this.miniBoost) ? this.miniOffsetScale * 0.8 * sizeFactor : 1; // Stronger boost
+        const offsetX = baseOffsetX * boost * this.refractScale;   // Enhanced horizontal refraction
+        const offsetY = baseOffsetY * boost * this.refractScale;   // Enhanced vertical refraction
+        const mag = (this.useMiniRefraction && this.miniBoost) ? Math.min(1.15, this.miniMagnification * 0.8 * sizeFactor) : baseMag; // Enhanced magnification
         
         // Calculate source rectangle with refraction offset
         let sx, sy, sw, sh, srcCanvas;
@@ -1261,11 +1315,35 @@ class RainOnGlass {
           const centerX = x;
           const centerY = y;
           
+          // Check if it's a test drop
+          if (d._testDrop) {
+            // For test drops, draw a semi-transparent royal blue border to show refraction area
+            ctx.strokeStyle = 'royalblue';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, rx, ry, d.rotation || 0, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
           ctx.save();
           
-          // Create circular mask
+          // ORGANIC SHAPE VARIATION: Use goldNoise for natural droplet shapes
+          let organicRadiusX = radius;
+          let organicRadiusY = radius;
+          
+          if (window.RainUtils && d._organicSeed) {
+            // Use goldNoise for organic shape variation based on drop position and seed
+            const shapeVariation = window.RainUtils.organicShapeVariation(
+              new window.RainUtils.Vec2(centerX, centerY), 
+              d._organicSeed
+            );
+            organicRadiusX = radius * shapeVariation;
+            organicRadiusY = radius * (1 + (shapeVariation - 1) * 0.5); // Slightly different Y variation
+          }
+          
+          // Create organic elliptical mask (not perfect circle)
           ctx.beginPath();
-          ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+          ctx.ellipse(centerX, centerY, organicRadiusX, organicRadiusY, 0, 0, Math.PI * 2);
           ctx.clip();
           
           // Create temporary canvas for radial sampling
@@ -1280,9 +1358,14 @@ class RainOnGlass {
           const sampleRadius = radius * 1.5; // Sample larger area for background content
           const sampleSize = Math.ceil(sampleRadius * 2);
           
-          // Calculate source area with refraction offset (like a magnifying glass)
-          const sourceX = Math.max(0, Math.min(srcCanvas.width - sampleSize, (centerX - sampleRadius + offsetX) * this.dpr));
-          const sourceY = Math.max(0, Math.min(srcCanvas.height - sampleSize, (centerY - sampleRadius + offsetY) * this.dpr));
+        // POSITION-DEPENDENT SAMPLING: Each drop samples from its specific location
+        // This creates the effect where drops show different background content based on where they fall
+        const positionOffsetX = offsetX * (1 + Math.sin(centerX * 0.01) * 0.3); // Vary offset based on position
+        const positionOffsetY = offsetY * (1 + Math.cos(centerY * 0.008) * 0.2); // Vary offset based on position
+        
+        // Sample from the drop's specific position on the background
+        const sourceX = Math.max(0, Math.min(srcCanvas.width - sampleSize, (centerX - sampleRadius + positionOffsetX) * this.dpr));
+        const sourceY = Math.max(0, Math.min(srcCanvas.height - sampleSize, (centerY - sampleRadius + positionOffsetY) * this.dpr));
           const sourceW = Math.min(sampleSize, srcCanvas.width - sourceX);
           const sourceH = Math.min(sampleSize, srcCanvas.height - sourceY);
           
@@ -1303,6 +1386,10 @@ class RainOnGlass {
               magX, magY, magSize, magSize);
             
             tempCtx.restore();
+            
+            // Draw the sampled background to the main canvas
+            ctx.drawImage(tempCanvas, 0, 0, tempSize, tempSize, 
+              centerX - radius, centerY - radius, radius * 2, radius * 2);
           }
           
           // No need for putImageData - we drew directly to tempCtx
@@ -1320,7 +1407,7 @@ class RainOnGlass {
       ctx.restore();
 
       // optional trail: tiny dot behind the drop
-      if (!TEST_MODE && Math.random() < 0.08) {
+      if (!TEST_MODE && !this.testMode && Math.random() < 0.08) {
         ctx.fillStyle = 'rgba(255,255,255,0.06)';
         ctx.beginPath();
         ctx.arc(x - rx * 0.1, y - ry - 1, Math.max(0.5, rx * 0.15), 0, Math.PI * 2);
@@ -1343,20 +1430,30 @@ class RainOnGlass {
         }
       }
 
-      // specular highlight - stronger for better visibility
-      const hg = ctx.createRadialGradient(x - rx * 0.35, y - ry * 0.35, 0, x - rx * 0.2, y - ry * 0.2, rx * 0.9);
-      hg.addColorStop(0, 'rgba(255,255,255,0.95)');
-      hg.addColorStop(0.1, 'rgba(255,255,255,0.7)');
-      hg.addColorStop(0.3, 'rgba(255,255,255,0.3)');
-      hg.addColorStop(0.6, 'rgba(255,255,255,0.1)');
-      hg.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = hg;
-      ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+      // Enhanced specular highlight for micro-lens effect (skip in test mode)
+      if (!this.testMode) {
+        // Primary highlight - stronger for micro-lens effect
+        const hg = ctx.createRadialGradient(x - rx * 0.3, y - ry * 0.3, 0, x - rx * 0.15, y - ry * 0.15, rx * 0.8);
+        hg.addColorStop(0, 'rgba(255,255,255,0.98)');
+        hg.addColorStop(0.1, 'rgba(255,255,255,0.8)');
+        hg.addColorStop(0.3, 'rgba(255,255,255,0.4)');
+        hg.addColorStop(0.6, 'rgba(255,255,255,0.15)');
+        hg.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = hg;
+        ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
 
-      // rim - more prominent for definition
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-      ctx.lineWidth = Math.max(1.5, this.dpr * 0.75) / this.dpr;
-      ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+        // Secondary highlight for micro-lens depth
+        const hg2 = ctx.createRadialGradient(x - rx * 0.1, y - ry * 0.1, 0, x - rx * 0.05, y - ry * 0.05, rx * 0.3);
+        hg2.addColorStop(0, 'rgba(255,255,255,0.6)');
+        hg2.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = hg2;
+        ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+
+        // Enhanced rim for micro-lens definition
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = Math.max(2, this.dpr * 1.0) / this.dpr;
+        ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+      }
 
       // edge darkening for depth - stronger for more 3D effect
       const edgeG = ctx.createRadialGradient(x, y, rx * 0.5, x, y, rx);
@@ -1391,8 +1488,8 @@ class RainOnGlass {
       ctx.restore();
     }
 
-    // Render condensation droplets (tiny sparkling points)
-    if (this.enableCondensation && this.condensation.length > 0) {
+    // Render condensation droplets (tiny sparkling points) - skip in test mode
+    if (this.enableCondensation && !this.testMode && this.condensation.length > 0) {
       ctx.save();
       for (const c of this.condensation) {
         const x = c.x / this.dpr;
@@ -1403,25 +1500,27 @@ class RainOnGlass {
         const sparkleIntensity = 0.4 + 0.6 * Math.abs(Math.sin(c.twinkle));
         const alpha = c.life * sparkleIntensity * c.sparkle;
         
-        // Create more visible sparkling highlight
-        ctx.globalAlpha = alpha * 0.8;
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Add bright center sparkle for micro-condensation effect
-        ctx.globalAlpha = alpha * 1.2;
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 1.2})`;
-        ctx.beginPath();
-        ctx.arc(x, y, r * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-        if (alpha > 0.5) {
+        // Create more visible sparkling highlight (skip in test mode)
+        if (!this.testMode) {
           ctx.globalAlpha = alpha * 0.8;
-          ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+          ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Add bright center sparkle for micro-condensation effect
+          ctx.globalAlpha = alpha * 1.2;
+          ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 1.2})`;
           ctx.beginPath();
           ctx.arc(x, y, r * 0.3, 0, Math.PI * 2);
           ctx.fill();
+          if (alpha > 0.5) {
+            ctx.globalAlpha = alpha * 0.8;
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.beginPath();
+            ctx.arc(x, y, r * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
       }
       ctx.restore();

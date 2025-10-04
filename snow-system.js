@@ -14,9 +14,13 @@ class SnowSystem {
       return;
     }
 
-    // Configuration - BALANCED VARIABLE SNOW SYSTEM
+    // Mobile detection for performance optimization
+    this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                    || window.innerWidth <= 768;
+
+    // Configuration - BALANCED VARIABLE SNOW SYSTEM (Mobile-optimized)
     this.config = {
-      particleCount: 10000,    // 10k particles
+      particleCount: this.isMobile ? 3000 : 10000,    // Fewer particles on mobile
       width: 100,
       height: 100,
       depth: 100,
@@ -24,17 +28,19 @@ class SnowSystem {
       speedH: 0.8,            // Horizontal wind speed
       radiusX: 3.0,           // Balanced drift radius
       radiusZ: 3.0,           // Balanced drift radius
-      size: 100.0,            // Base particle size
+      size: this.isMobile ? 80.0 : 100.0,            // Smaller particles on mobile
       scale: 4.0,             // Distance scale for perspective
       opacity: 0.4,           // Lower opacity for atmospheric depth
       
       // Dynamic intensity system (FAST changes every 5-15 seconds)
       minIntensity: 0.3,      // Subtle flurries
-      maxIntensity: 3.5,      // INTENSE BLIZZARD (2x more dramatic)
+      maxIntensity: this.isMobile ? 2.5 : 3.5,      // Less intense on mobile
       intensityChangeSpeed: 0.08, // Faster intensity transitions
       minChangeInterval: 5,   // Minimum 5 seconds between changes
       maxChangeInterval: 15,  // Maximum 15 seconds between changes
     };
+    
+    console.log(`Snow system - ${this.isMobile ? 'Mobile' : 'Desktop'} mode (${this.config.particleCount} particles)`);
     
     // Dynamic state
     this.currentIntensity = 0.5;  // Start at medium

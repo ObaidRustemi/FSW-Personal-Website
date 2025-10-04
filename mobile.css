@@ -1,3 +1,4 @@
+/* Tablet and mobile breakpoint */
 @media (max-width: 975px) {
   #mobileSecondContainer {
     visibility: visible;
@@ -163,6 +164,35 @@
   .menu-wrap .menu > div {
     background-color: rgba(73, 98, 163, 0.8);
   }
+  
+  /* Mobile-optimized menu typography */
+  .menu-wrap .menu .menu-content ul li {
+    font-size: 2.5rem;
+    padding: 0.5rem;
+    
+    /* Lighter 3D effect for mobile performance */
+    text-shadow: 
+      0 1px 0 #aaa,
+      0 2px 0 #999,
+      0 3px 0 #888,
+      0 4px 0 #777,
+      0 6px 10px rgba(0, 0, 0, 0.3),
+      0 0 15px rgba(255, 255, 255, 0.2);
+  }
+  
+  .menu-wrap .menu .menu-content ul li:hover {
+    /* Simplified hover for mobile */
+    text-shadow: 
+      0 1px 0 #bbb,
+      0 2px 0 #aaa,
+      0 3px 0 #999,
+      0 4px 0 #888,
+      0 7px 12px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(255, 255, 255, 0.4);
+    
+    transform: scale(1.05);
+  }
+}
 
   #projects-div {
     /* width: 95%; */
@@ -179,5 +209,26 @@
   }
 
 
+}
+
+/* Small mobile devices - extra optimizations */
+@media (max-width: 480px) {
+  .menu-wrap .menu .menu-content ul li {
+    font-size: 1.8rem;
+    padding: 0.3rem;
+  }
   
+  #mobileProfilePhoto {
+    height: 200px;
+  }
+  
+  #mobile-linkedin-icon,
+  #mobile-email-icon {
+    height: 50px;
+  }
+  
+  #mobileSecondContainer {
+    height: auto;
+    min-height: 600px;
+  }
 }

@@ -5,6 +5,11 @@ import SnowSystem from './snow-system.js';
 
 console.log('Weather controller - initializing...');
 
+// Mobile detection
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+                 || window.innerWidth <= 768;
+console.log(`Weather controller - ${isMobile ? 'Mobile' : 'Desktop'} mode`);
+
 // Initialize systems
 let snowSystem = null;
 let raindropFx = null;
@@ -101,16 +106,16 @@ async function preInitRain() {
     canvas: rainCanvas,
     background: cityBackgroundImage,
 
-    // Rendering options - SHARP background with MODERATE mist
-    backgroundBlurSteps: 2,
+    // Rendering options - SHARP background with MODERATE mist (Mobile-optimized)
+    backgroundBlurSteps: isMobile ? 1 : 2,
     mist: true,
     mistColor: [0.04, 0.05, 0.06, 0.7],
     mistTime: 8,
-    mistBlurStep: 3,
+    mistBlurStep: isMobile ? 2 : 3,
 
-    // Droplet spawning - GENTLE rain
-    dropletsPerSeconds: 40,
-    dropletSize: [8, 25],
+    // Droplet spawning - GENTLE rain (Fewer on mobile)
+    dropletsPerSeconds: isMobile ? 25 : 40,
+    dropletSize: isMobile ? [6, 20] : [8, 25],
 
     // Raindrop appearance - SUBTLE refraction (realistic)
     smoothRaindrop: [0.96, 1.0],
@@ -127,10 +132,10 @@ async function preInitRain() {
     raindropLightBump: 0.7,
     raindropEraserSize: [0.88, 1.05],
 
-    // Physics simulation - GENTLE
+    // Physics simulation - GENTLE (Mobile-optimized)
     spawnInterval: [0.03, 0.12],
-    spawnSize: [60, 150],
-    spawnLimit: 800,
+    spawnSize: isMobile ? [50, 120] : [60, 150],
+    spawnLimit: isMobile ? 400 : 800,
     slipRate: 0.6,
     motionInterval: [0.2, 0.8],
     xShifting: [0.0, 0.06],

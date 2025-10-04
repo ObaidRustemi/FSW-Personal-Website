@@ -105,6 +105,13 @@ body {
   transform-style: preserve-3d;
 }
 
+/* Mobile responsive typography */
+@media (max-width: 768px) {
+  .showcase h1 {
+    font-size: 2.5rem;
+  }
+}
+
 .showcase h1:hover {
   /* Enhanced 3D effect on hover with MORE glow */
   text-shadow: 
@@ -159,6 +166,26 @@ body {
   
   transition: all 0.5s ease;
   cursor: default;
+}
+
+@media (max-width: 768px) {
+  .showcase p {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .showcase h1 {
+    font-size: 2rem;
+  }
+  
+  .showcase p {
+    font-size: 1.8rem;
+  }
+  
+  .container {
+    padding: 0 1.5rem;
+  }
 }
 
 .showcase p:hover {

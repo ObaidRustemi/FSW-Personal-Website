@@ -91,9 +91,9 @@ class RainOnGlass {
                      Number(q.get('xShiftMax')) || options.xShifting?.[1] || 0.1]; // horizontal drift range
     this.slipRate = Number(q.get('slipRate')) || options.slipRate || 0.1; // slip rate for random motion
     
-    // Advanced rendering parameters - Enhanced for micro-lens effect
-    this.refractBase = Number(q.get('refractBase')) || options.refractBase || 0.8; // base refraction strength (increased for stronger lens effect)
-    this.refractScale = Number(q.get('refractScale')) || options.refractScale || 1.2; // refraction scaling (increased for stronger lens effect)
+    // Advanced rendering parameters - DRAMATICALLY ENHANCED for visible micro-lens effect
+    this.refractBase = Number(q.get('refractBase')) || options.refractBase || 1.5; // base refraction strength (dramatically increased for visible lens effect)
+    this.refractScale = Number(q.get('refractScale')) || options.refractScale || 2.0; // refraction scaling (dramatically increased for visible lens effect)
     this.raindropLightPos = options.raindropLightPos || [-1, 1, 2, 0]; // light position for highlights
     this.raindropDiffuseLight = options.raindropDiffuseLight || [0.2, 0.2, 0.2]; // diffuse lighting
     this.raindropShadowOffset = Number(q.get('shadowOffset')) || options.raindropShadowOffset || 0.8; // shadow offset
@@ -1277,37 +1277,24 @@ class RainOnGlass {
       
       // NEW ENHANCED REFRACTION: Position-dependent background sampling with organic shapes
       if (this.hasBackground && this.bgSharp.width > 0 && this.bgSharp.height > 0 && rx > 2) {
-        // Enhanced refraction parameters for micro-lens effect (inspired by ChatGPT analysis)
+        // DRAMATICALLY ENHANCED refraction parameters for visible micro-lens effect
         const sizeFactor = Math.min(1, rx / 8); // Scale effect by droplet size
-        const baseOffsetX = rx * this.refractBase * 0.5 * sizeFactor;  // Stronger horizontal distortion for micro-lens
-        const baseOffsetY = -ry * (this.refractBase * 0.4) * sizeFactor; // Stronger vertical distortion for micro-lens
-        const baseMag = 1.05 + (0.02 * sizeFactor);  // Stronger magnification for micro-lens effect
-        const boost = (this.useMiniRefraction && this.miniBoost) ? this.miniOffsetScale * 0.8 * sizeFactor : 1; // Stronger boost
+        const baseOffsetX = rx * this.refractBase * 2.0 * sizeFactor;  // MUCH stronger horizontal distortion
+        const baseOffsetY = -ry * (this.refractBase * 1.5) * sizeFactor; // MUCH stronger vertical distortion
+        const baseMag = 1.2 + (0.1 * sizeFactor);  // MUCH stronger magnification
+        const boost = (this.useMiniRefraction && this.miniBoost) ? this.miniOffsetScale * 1.5 * sizeFactor : 1; // MUCH stronger boost
         const offsetX = baseOffsetX * boost * this.refractScale;   // Enhanced horizontal refraction
         const offsetY = baseOffsetY * boost * this.refractScale;   // Enhanced vertical refraction
-        const mag = (this.useMiniRefraction && this.miniBoost) ? Math.min(1.15, this.miniMagnification * 0.8 * sizeFactor) : baseMag; // Enhanced magnification
+        const mag = (this.useMiniRefraction && this.miniBoost) ? Math.min(1.5, this.miniMagnification * 1.2 * sizeFactor) : baseMag; // MUCH stronger magnification
         
         // Calculate source rectangle with refraction offset
         let sx, sy, sw, sh, srcCanvas;
-        if (this.useMiniRefraction && this.bgMini && this.bgMini.width > 0 && this.bgMini.height > 0) {
-          // sample from miniature buffer (lower bandwidth, stronger look)
-          const scaleX = this.bgMini.width / (this.bgSharp.width);
-          const scaleY = this.bgMini.height / (this.bgSharp.height);
-          const scaleDown = Math.max(1, Math.floor(this.reflectionScaledownFactor / (this.miniBoost ? 1 : 1))); // keep as configured
-          const mapW = (this.reflectionDropMappingWidth / scaleDown) / this.dpr;
-          const mapH = (this.reflectionDropMappingHeight / scaleDown) / this.dpr;
-          sx = Math.max(0, Math.min(this.bgMini.width - mapW, (x - mapW / 2 + offsetX) * this.dpr * scaleX));
-          sy = Math.max(0, Math.min(this.bgMini.height - mapH, (y - mapH / 2 + offsetY) * this.dpr * scaleY));
-          sw = Math.min(mapW, this.bgMini.width - sx);
-          sh = Math.min(mapH, this.bgMini.height - sy);
-          srcCanvas = this.bgMini;
-        } else {
-          sx = Math.max(0, Math.min(this.bgSharp.width - rx * 2 * this.dpr, (x - rx + offsetX) * this.dpr));
-          sy = Math.max(0, Math.min(this.bgSharp.height - ry * 2 * this.dpr, (y - ry + offsetY) * this.dpr));
-          sw = Math.min(rx * 2 * this.dpr, this.bgSharp.width - sx);
-          sh = Math.min(ry * 2 * this.dpr, this.bgSharp.height - sy);
-          srcCanvas = this.bgSharp;
-        }
+        // Always sample from the SHARP background for realistic lensing
+        sx = Math.max(0, Math.min(this.bgSharp.width - rx * 2 * this.dpr, (x - rx + offsetX) * this.dpr));
+        sy = Math.max(0, Math.min(this.bgSharp.height - ry * 2 * this.dpr, (y - ry + offsetY) * this.dpr));
+        sw = Math.min(rx * 2 * this.dpr, this.bgSharp.width - sx);
+        sh = Math.min(ry * 2 * this.dpr, this.bgSharp.height - sy);
+        srcCanvas = this.bgSharp;
         
         if (sw > 0 && sh > 0) {
           // TRUE CIRCULAR REFRACTION: Radial sampling instead of rectangular
@@ -1346,61 +1333,36 @@ class RainOnGlass {
           ctx.ellipse(centerX, centerY, organicRadiusX, organicRadiusY, 0, 0, Math.PI * 2);
           ctx.clip();
           
-          // Create temporary canvas for radial sampling
-          const tempCanvas = document.createElement('canvas');
-          const tempSize = Math.ceil(radius * 2);
-          tempCanvas.width = tempSize;
-          tempCanvas.height = tempSize;
-          const tempCtx = tempCanvas.getContext('2d');
-          
-          // PROPER RADIAL SAMPLING: Show magnified background through water lens
-          // Create a larger sampling area to capture background content
-          const sampleRadius = radius * 1.5; // Sample larger area for background content
+          // POSITION-DEPENDENT SAMPLING: Each drop samples from its specific location
+          // This creates the effect where drops show different background content based on where they fall
+          const sampleRadius = radius * 1.5;
           const sampleSize = Math.ceil(sampleRadius * 2);
-          
-        // POSITION-DEPENDENT SAMPLING: Each drop samples from its specific location
-        // This creates the effect where drops show different background content based on where they fall
-        const positionOffsetX = offsetX * (1 + Math.sin(centerX * 0.01) * 0.3); // Vary offset based on position
-        const positionOffsetY = offsetY * (1 + Math.cos(centerY * 0.008) * 0.2); // Vary offset based on position
-        
-        // Sample from the drop's specific position on the background
-        const sourceX = Math.max(0, Math.min(srcCanvas.width - sampleSize, (centerX - sampleRadius + positionOffsetX) * this.dpr));
-        const sourceY = Math.max(0, Math.min(srcCanvas.height - sampleSize, (centerY - sampleRadius + positionOffsetY) * this.dpr));
+          const positionOffsetX = offsetX * (1 + Math.sin(centerX * 0.01) * 0.3);
+          const positionOffsetY = offsetY * (1 + Math.cos(centerY * 0.008) * 0.2);
+
+          // Source rect on SHARP background (or miniature when enabled)
+          const sourceX = Math.max(0, Math.min(srcCanvas.width - sampleSize, (centerX - sampleRadius + positionOffsetX) * this.dpr));
+          const sourceY = Math.max(0, Math.min(srcCanvas.height - sampleSize, (centerY - sampleRadius + positionOffsetY) * this.dpr));
           const sourceW = Math.min(sampleSize, srcCanvas.width - sourceX);
           const sourceH = Math.min(sampleSize, srcCanvas.height - sourceY);
-          
+
           if (sourceW > 0 && sourceH > 0) {
-            // Draw the background sample with magnification (like water droplet lens)
-            const magSize = radius * 2 * mag; // Magnified size
-            const magX = centerX - magSize / 2;
-            const magY = centerY - magSize / 2;
-            
-            // Apply radial distortion by drawing with circular mask
-            tempCtx.save();
-            tempCtx.beginPath();
-            tempCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-            tempCtx.clip();
-            
-            // Draw magnified background (this creates the lens effect)
-            tempCtx.drawImage(srcCanvas, sourceX, sourceY, sourceW, sourceH, 
-              magX, magY, magSize, magSize);
-            
-            tempCtx.restore();
-            
-            // Draw the sampled background to the main canvas
-            ctx.drawImage(tempCanvas, 0, 0, tempSize, tempSize, 
-              centerX - radius, centerY - radius, radius * 2, radius * 2);
+            // Draw magnified sharp background directly into the clipped ellipse on the MAIN context
+            // This avoids intermediate resampling and preserves sharp detail inside the bead
+            const outSize = radius * 2 * mag;
+            const outX = centerX - outSize / 2;
+            const outY = centerY - outSize / 2;
+
+            const prevSmoothing = ctx.imageSmoothingEnabled;
+            const prevQuality = ctx.imageSmoothingQuality;
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.drawImage(srcCanvas, sourceX, sourceY, sourceW, sourceH, outX, outY, outSize, outSize);
+            ctx.imageSmoothingEnabled = prevSmoothing;
+            ctx.imageSmoothingQuality = prevQuality;
           }
-          
-          // No need for putImageData - we drew directly to tempCtx
-          
-          // Apply magnification and draw
-          const drawSize = radius * 2 * mag;
-          const drawX = centerX - drawSize / 2;
-          const drawY = centerY - drawSize / 2;
-          
-          ctx.drawImage(tempCanvas, 0, 0, tempSize, tempSize, drawX, drawY, drawSize, drawSize);
-          
+
           ctx.restore();
         }
       }
@@ -1577,7 +1539,55 @@ const rainCanvas = document.getElementById('rain-glass');
 let rain;
 
 function ensureInstance() {
-  if (!rain && rainCanvas) rain = new RainOnGlass(rainCanvas);
+  if (!rain && rainCanvas) {
+    // Create with LOW/realistic defaults so the menu opens subtly
+    rain = new RainOnGlass(rainCanvas, {
+      // Background + atmosphere
+      blur: 6,                 // modest backdrop blur for capture
+      fog: true,
+      fogStrength: 0.06,
+      saturation: 0.9,
+
+      // Physics (slow, calm rain)
+      gravityDeg: 90,
+      gravity: 0.35,
+      gravityVariance: 0.0,
+      terminalVelocity: 10,
+      dragCoeff: 0.9,
+      windX: 0.0,
+      windY: 0.0,
+      slipRate: 0.08,
+
+      // Appearance (small drops, subtle trails)
+      sizeVariance: 0.6,
+      trailIntensity: 0.25,
+      trailDropDensity: 0.15,
+      trailDropSize: [0.28, 0.42],
+      trailSpread: 0.4,
+      velocitySpread: 0.2,
+      evaporate: 8,
+      shrinkRate: 0.008,
+
+      // Subtle, realistic refraction
+      refractBase: 0.25,
+      refractScale: 0.35,
+      raindropDiffuseLight: [0.25, 0.25, 0.25],
+      raindropShadowOffset: 0.55,
+      raindropLightBump: 0.7,
+
+      // Mini refraction kept but tamed
+      useMiniRefraction: true,
+      miniBoost: false,
+      miniMagnification: 1.06,
+      miniOffsetScale: 1.1
+    });
+
+    // Very low density/spawn so it feels calm when the menu opens
+    const isMobile = (typeof window !== 'undefined') && (window.matchMedia?.('(max-width: 768px)').matches || 'ontouchstart' in window.navigator || /Mobi|Android/i.test(window.navigator.userAgent));
+    rain.initialDensity = isMobile ? 6 : 10;
+    rain.maxDrops = isMobile ? 80 : 120;
+    rain.spawnChance = 0.18; // light drizzle
+  }
 }
 
 function onOpen() {

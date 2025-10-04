@@ -106,15 +106,15 @@
       <!-- Refraction Base -->
       <div style="margin-bottom: 10px;">
         <label style="display: block; margin-bottom: 3px; font-size: 12px;">Refraction Base:</label>
-        <input type="range" id="refractBase" min="0.1" max="1.0" step="0.1" value="0.8" style="width: 100%;">
-        <span id="refractBaseValue" style="font-size: 11px; color: #ccc;">0.8</span>
+        <input type="range" id="refractBase" min="0.1" max="2.0" step="0.1" value="1.5" style="width: 100%;">
+        <span id="refractBaseValue" style="font-size: 11px; color: #ccc;">1.5</span>
       </div>
       
       <!-- Refraction Scale -->
       <div style="margin-bottom: 10px;">
         <label style="display: block; margin-bottom: 3px; font-size: 12px;">Refraction Scale:</label>
-        <input type="range" id="refractScale" min="0.1" max="1.0" step="0.1" value="1.2" style="width: 100%;">
-        <span id="refractScaleValue" style="font-size: 11px; color: #ccc;">1.2</span>
+        <input type="range" id="refractScale" min="0.1" max="3.0" step="0.1" value="2.0" style="width: 100%;">
+        <span id="refractScaleValue" style="font-size: 11px; color: #ccc;">2.0</span>
       </div>
     </div>
     
@@ -912,6 +912,8 @@
                  }
                  
                  console.log('✅ Added 10 normal rain drops');
+                 console.log('🔍 Refraction Base:', rain.refractBase);
+                 console.log('🔍 Refraction Scale:', rain.refractScale);
                  console.log('🎯 Normal rain should be visible');
                  
                  return 'Normal rain test complete';

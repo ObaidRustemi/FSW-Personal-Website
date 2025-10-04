@@ -139,24 +139,65 @@
 
 .menu-wrap .menu .menu-content ul li {
   list-style: none;
-  color: black;
-  font-size: 1.6rem;
+  color: white;
+  font-size: 4.5rem;
   padding: 1rem;
+  font-family: 'Allura', cursive;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  
+  /* 3D EXTRUDED TEXT EFFECT - Lighter version for menu links */
+  text-shadow: 
+    /* Subtle 3D extrusion */
+    0 1px 0 #aaa,
+    0 2px 0 #999,
+    0 3px 0 #888,
+    0 4px 0 #777,
+    0 5px 0 #666,
+    0 6px 0 #555,
+    /* Shadow depth */
+    0 8px 12px rgba(0, 0, 0, 0.3),
+    0 10px 20px rgba(0, 0, 0, 0.2),
+    /* Soft glow */
+    0 0 15px rgba(255, 255, 255, 0.2),
+    0 0 30px rgba(135, 206, 250, 0.1);
+  
+  transition: all 0.5s ease;
+  cursor: default;
 }
 
 .menu-wrap .menu .menu-content ul li a {
   color: inherit;
   text-decoration: none;
-  transition: color 0.4s ease;
+  transition: all 0.5s ease;
 }
 
 .menu-wrap .menu .menu-content ul li:hover {
-    color: white;
+  /* Enhanced 3D effect on hover with MORE glow */
+  text-shadow: 
+    /* Brighter 3D on hover */
+    0 1px 0 #bbb,
+    0 2px 0 #aaa,
+    0 3px 0 #999,
+    0 4px 0 #888,
+    0 5px 0 #777,
+    0 6px 0 #666,
+    0 7px 0 #555,
+    /* Stronger shadows */
+    0 9px 15px rgba(0, 0, 0, 0.4),
+    0 12px 25px rgba(0, 0, 0, 0.3),
+    /* Enhanced glow */
+    0 0 25px rgba(255, 255, 255, 0.5),
+    0 0 50px rgba(135, 206, 250, 0.4),
+    0 0 75px rgba(135, 206, 250, 0.2);
+  
+  transform: scale(1.02) translateY(-1px);
+  letter-spacing: 0.08em;
 }
 
 /* Removed legacy CSS droplet system */
 
-/* Rain compositor layer sits above frost, below UI/content */
+/* Rain compositor layer sits above snow (z-index: 1), below UI/content */
 .menu-wrap .menu .rain-layer {
   position: fixed;
   top: 0;
@@ -165,6 +206,7 @@
   height: 100vh;
   pointer-events: none;
   opacity: 0;
+  z-index: 200; /* Above snow (z-index: 1) but below menu content */
   transition: opacity 0.4s ease;
 }
 
@@ -172,6 +214,9 @@
   width: 100%;
   height: 100%;
   display: block;
+  
+  /* Semi-transparent so snow layer shows through from behind */
+  opacity: 0.85;
 }
 
 /* Show rain compositor when menu opens */

@@ -12,7 +12,7 @@
       }
     </script>
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Allura&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="main.css" />
@@ -211,6 +211,97 @@
     </div>
 
     <header class="showcase">
+      <div class="snow-container">
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+        <div class="snow"></div>
+      </div>
       <div class="container showcase-inner">
         <h1>Welcome to..</h1>
         <p>Obaid Rustemi's homepage..</p>

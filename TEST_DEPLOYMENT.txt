@@ -1,0 +1,3 @@
+DEPLOYMENT TEST - If you can see this file, GitHub Pages is deploying from the correct branch.
+Timestamp: $(date)
+Latest commit: $(git log -1 --oneline)

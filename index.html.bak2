@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- 🌊 Three.js for Photorealistic Water Physics (ES Modules) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
+        }
+      }
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Great+Vibes&family=Allura&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="landing.css" /> 
+    <link rel="stylesheet" href="menu.css" />
+    <link rel="stylesheet" href="mobile.css" />
+    <!-- html2canvas for capturing background under the overlay -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+    <!-- RaindropFX library for realistic rain effect -->
+    <script src="/raindrop-fx.js"></script>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Obaid Rustemi's Website</title>
+  </head>
+  <body>
+  
+    <!-- SHADER SYSTEM: Three.js ES Modules for WebGL Water Shaders -->
+    <!-- 🌊 TIER A: SVG Filters for Realistic Water Droplets -->
+    <svg width="0" height="0" style="position: absolute; pointer-events: none;" aria-hidden="true">
+      <defs>
+        <filter id="dropletShine" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur"/>
+          <feSpecularLighting in="blur" surfaceScale="3" specularConstant="0.8" 
+                              specularExponent="20" lighting-color="white" result="spec">
+            <fePointLight x="-500" y="-400" z="200"/>
+          </feSpecularLighting>
+          <feComposite in="spec" in2="SourceAlpha" operator="in" result="specMask"/>
+          <feMerge>
+            <feMergeNode in="SourceGraphic"/>
+            <feMergeNode in="specMask"/>
+          </feMerge>
+        </filter>
+      </defs>
+    </svg>
+
+    <div class="menu-wrap">
+      <input type="checkbox" class="toggler" />
+      <div class="hamburger"><div></div></div>
+      <div class="menu">
+        <!-- Layer 1: Backdrop Frost (enhanced frosted glass) -->
+        <div class="menu-overlay" aria-hidden="true"></div>
+        
+        <!-- Rain on Glass compositor canvas (renders refractive droplets) -->
+        <div class="rain-layer" aria-hidden="true">
+          <canvas id="rain-glass"></canvas>
+        </div>
+        
+        <!-- Removed old SVG droplet layer -->
+        <!-- <div class="droplets" aria-hidden="true"> -->
+          <!-- Tiny droplets - micro condensation (0.2-0.5 size, 6-9s duration) -->
+          <svg class="drop drop-1" viewBox="-20 -20 140 200" style="--delay: -1.2s; left: 5vw; top: 3vh; --size: 0.2; --duration: 6s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-2" viewBox="-20 -20 140 200" style="--delay: -8.7s; left: 18vw; top: 11vh; --size: 0.3; --duration: 7s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-3" viewBox="-20 -20 140 200" style="--delay: -15.4s; left: 34vw; top: 8vh; --size: 0.4; --duration: 8s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-4" viewBox="-20 -20 140 200" style="--delay: -3.9s; left: 52vw; top: 15vh; --size: 0.3; --duration: 7s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-5" viewBox="-20 -20 140 200" style="--delay: -11.1s; left: 68vw; top: 4vh; --size: 0.5; --duration: 9s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-6" viewBox="-20 -20 140 200" style="--delay: -18.6s; left: 81vw; top: 12vh; --size: 0.2; --duration: 6s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-7" viewBox="-20 -20 140 200" style="--delay: -6.3s; left: 93vw; top: 19vh; --size: 0.4; --duration: 8s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-8" viewBox="-20 -20 140 200" style="--delay: -13.8s; left: 12vw; top: 26vh; --size: 0.3; --duration: 7s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-9" viewBox="-20 -20 140 200" style="--delay: -2.5s; left: 29vw; top: 33vh; --size: 0.5; --duration: 9s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-10" viewBox="-20 -20 140 200" style="--delay: -9.7s; left: 45vw; top: 39vh; --size: 0.2; --duration: 6s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-11" viewBox="-20 -20 140 200" style="--delay: -16.2s; left: 61vw; top: 46vh; --size: 0.4; --duration: 8s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-12" viewBox="-20 -20 140 200" style="--delay: -4.4s; left: 77vw; top: 52vh; --size: 0.3; --duration: 7s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+
+          <!-- Small droplets - quick formation (0.6-0.9 size, 8-12s duration) -->
+          <svg class="drop drop-13" viewBox="-20 -20 140 200" style="--delay: -7.1s; left: 9vw; top: 6vh; --size: 0.6; --duration: 8s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-14" viewBox="-20 -20 140 200" style="--delay: -14.9s; left: 22vw; top: 14vh; --size: 0.8; --duration: 10s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-15" viewBox="-20 -20 140 200" style="--delay: -1.8s; left: 37vw; top: 21vh; --size: 0.7; --duration: 9s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-16" viewBox="-20 -20 140 200" style="--delay: -10.3s; left: 55vw; top: 9vh; --size: 0.9; --duration: 12s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-17" viewBox="-20 -20 140 200" style="--delay: -17.6s; left: 71vw; top: 16vh; --size: 0.6; --duration: 8s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-18" viewBox="-20 -20 140 200" style="--delay: -5.2s; left: 86vw; top: 23vh; --size: 0.8; --duration: 10s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-19" viewBox="-20 -20 140 200" style="--delay: -12.7s; left: 15vw; top: 31vh; --size: 0.7; --duration: 9s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-20" viewBox="-20 -20 140 200" style="--delay: -3.4s; left: 33vw; top: 38vh; --size: 0.9; --duration: 12s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-21" viewBox="-20 -20 140 200" style="--delay: -8.9s; left: 49vw; top: 44vh; --size: 0.6; --duration: 8s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-22" viewBox="-20 -20 140 200" style="--delay: -16.1s; left: 64vw; top: 51vh; --size: 0.8; --duration: 10s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-23" viewBox="-20 -20 140 200" style="--delay: -6.8s; left: 78vw; top: 58vh; --size: 0.7; --duration: 9s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-24" viewBox="-20 -20 140 200" style="--delay: -19.3s; left: 91vw; top: 64vh; --size: 0.9; --duration: 12s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+
+          <!-- Medium droplets - steady flow (1.0-1.3 size, 11-15s duration) -->
+          <svg class="drop drop-25" viewBox="-20 -20 140 200" style="--delay: -4.7s; left: 13vw; top: 7vh; --size: 1.0; --duration: 11s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-26" viewBox="-20 -20 140 200" style="--delay: -11.5s; left: 26vw; top: 17vh; --size: 1.2; --duration: 13s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-27" viewBox="-20 -20 140 200" style="--delay: -18.2s; left: 41vw; top: 24vh; --size: 1.1; --duration: 12s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-28" viewBox="-20 -20 140 200" style="--delay: -2.9s; left: 58vw; top: 32vh; --size: 1.3; --duration: 15s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-29" viewBox="-20 -20 140 200" style="--delay: -9.4s; left: 74vw; top: 29vh; --size: 1.0; --duration: 11s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-30" viewBox="-20 -20 140 200" style="--delay: -15.8s; left: 89vw; top: 37vh; --size: 1.2; --duration: 13s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-31" viewBox="-20 -20 140 200" style="--delay: -7.6s; left: 19vw; top: 43vh; --size: 1.1; --duration: 12s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-32" viewBox="-20 -20 140 200" style="--delay: -13.1s; left: 36vw; top: 49vh; --size: 1.3; --duration: 15s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-33" viewBox="-20 -20 140 200" style="--delay: -1.3s; left: 53vw; top: 56vh; --size: 1.0; --duration: 11s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-34" viewBox="-20 -20 140 200" style="--delay: -10.7s; left: 67vw; top: 62vh; --size: 1.2; --duration: 13s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+
+          <!-- Large droplets - slower, heavier (1.4-1.8 size, 14-20s duration) -->
+          <svg class="drop drop-35" viewBox="-20 -20 140 200" style="--delay: -5.9s; left: 8vw; top: 13vh; --size: 1.4; --duration: 14s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-36" viewBox="-20 -20 140 200" style="--delay: -12.4s; left: 31vw; top: 27vh; --size: 1.6; --duration: 16s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-37" viewBox="-20 -20 140 200" style="--delay: -19.7s; left: 47vw; top: 18vh; --size: 1.5; --duration: 15s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-38" viewBox="-20 -20 140 200" style="--delay: -3.2s; left: 63vw; top: 35vh; --size: 1.8; --duration: 20s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-39" viewBox="-20 -20 140 200" style="--delay: -14.6s; left: 82vw; top: 41vh; --size: 1.4; --duration: 14s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+          <svg class="drop drop-40" viewBox="-20 -20 140 200" style="--delay: -8.1s; left: 24vw; top: 55vh; --size: 1.7; --duration: 18s;">
+            <path d="M50,5 C65,35 90,70 90,100 A40,40 0 1,1 10,100 C10,70 35,35 50,5Z" filter="url(#dropletShine)"/>
+          </svg>
+        <!-- </div> -->
+
+        <!-- Layer 3: UI Content (menu items) -->
+        <nav class="menu-content" role="navigation">
+            <ul>
+              <li class="overlay-links"><a href="#secondContainer">About</a></li>
+              <li class="overlay-links">
+                <a href="https://docs.google.com/document/d/1CL_V-0mespUDRs0S8__7iWtMlsIRYbnQFw9OE4Es_zM/edit?usp=sharing"
+                  target="_blank"
+                  >Resume</a>
+              </li>
+              <li class="overlay-links"><a href="#thirdContainer">Projects</a></li>
+              <li class="overlay-links"><a href="#fourthContainer">Skills</a></li>
+              <!-- <li class="overlay-links"><a href="#">Contact</a></li> -->
+            </ul>
+        </nav>
+
+      </div>
+    </div>
+
+    <header class="showcase">
+      <div class="container showcase-inner">
+        <h1>Welcome to..</h1>
+        <p>Obaid Rustemi's homepage..</p>
+
+        <!-- <a href="#" class="btn">Visit my Linkedin!</a> -->
+      </div>
+    </header>
+    <div id ="mobileSecondContainer">
+      <div id="mobile-profile-photo-div">
+        <img id="mobileProfilePhoto"
+        src="profile-photo-2024.png"
+        alt="Obaid Pursuit"
+        class="profile-photo"
+      /></div>
+      <div class="mobileDivs" id="mobile-linkedin-div">
+        
+        <a href="https://www.linkedin.com/in/obaid-rustemi-0314a355/" target="_blank"><img id="mobile-linkedin-icon" src="linkedin.png"></a>
+      </div>
+      <div class="mobileDivs" id="mobile-p-div">
+        <p>Hi, I'm Obaid (Obie) Rustemi — a New Yorker with California roots, Afghan American heritage, and a lifelong love for technology. I grew up between Silicon Valley's early tech boom and the energy of New York, and those experiences shaped my curiosity and drive.
+          <br><br>
+          I began my career at Uber as an Android Mobile Engineer, where I transitioned from building with JavaScript, React, and HTML into the deep world of Kotlin, Java, and RxJava. Over time, I shifted into technical program management, where I now bridge engineering and strategy — helping ambitious projects scale while keeping my hands close to the technical details.
+          <br><br>
+          My journey hasn't been a straight line: I didn't take the traditional college-to-career path. Instead, I fought through setbacks, taught myself to code, built resilience through trial and error, and carved out a career I'm proud of. That winding road gave me a unique perspective on both the technical and human sides of building products.
+          <br><br>
+          Outside of work, I'm endlessly fascinated by how things connect — whether it's deep learning and neuro-symbolic AI, sports strategy, or the way history and culture shape our world. I'm a fan of UFC (Fedor will always be the 🐐), sneakers, gaming, and binge-watching shows with my wife. I also love traveling, winter weather, and long walks that spark big ideas.
+          <br><br>
+          Right now, I'm sharpening my coding skills again — experimenting with new tools, creating projects, and rediscovering the fun that first drew me into tech.
+          <br><br>
+          Thanks for stopping by. If you'd like to connect, you can find me on LinkedIn or reach out by email.</p>
+      </div>
+      <div class="mobileDivs" id="mobile-email-div">
+        
+        <a href="mailto:obaidrustemi@pursuit.org" target="_blank"><img id="mobile-email-icon" src="email.png"></a>
+      </div>
+      
+    </div>
+    <div id="secondContainerWrap">
+      <div id="linkedin-div" class="icon-divs">My LinkedIn
+        <a href="https://www.linkedin.com/in/obaid-rustemi-0314a355/" target="_blank"><img src="linkedin.png"></a>
+      </div>
+      <div id="secondContainer" class="containerLinks">
+        <h1>About Me</h1>
+        <div id="about-me-div">
+        <div id="mobile-profile-div">
+          <img
+              id="mobileProfilePhoto"
+              src="profile-photo-2024.png"
+              alt="Obaid Pursuit"
+              class="profile-photo"
+            />
+        </div>
+        
+        <div>
+          <p class="paragraph-text">
+            Hi, I'm Obaid (Obie) Rustemi — a New Yorker with California roots and a lifelong love for technology. I grew up between Silicon Valley's early tech boom and the energy of New York, and those experiences shaped my curiosity and drive.
+            <br /><br />
+            I began my career at Uber as an Android Mobile Engineer, where I transitioned from building with JavaScript, React, and HTML into the deep world of Kotlin, Java, and RxJava. Over time, I shifted into technical program management, where I now bridge engineering and strategy — helping ambitious projects scale while keeping my hands close to the technical details.
+            <br /><br />
+            My journey hasn't been a straight line: I didn't take the traditional college-to-career path. Instead, I fought through setbacks, taught myself to code, built resilience through trial and error, and carved out a career I'm proud of. That winding road gave me a unique perspective on both the technical and human sides of building products.
+            <br /><br />
+            Outside of work, I'm endlessly fascinated by how things connect — whether it's deep learning and neuro-symbolic AI, sports strategy, or the way history and culture shape our world. I'm a fan of UFC (Fedor will always be the 🐐), sneakers, gaming, and binge-watching shows with my wife. I also love traveling, winter weather, and long walks that spark big ideas.
+            <br /><br />
+            Right now, I'm sharpening my coding skills again — experimenting with new tools, creating projects, and rediscovering the fun that first drew me into tech.
+            <br /><br />
+            Thanks for stopping by. If you'd like to connect, you can find me on LinkedIn or reach out by email.
+          </p>
+        </div>
+        
+        <div id="profile-photo-div">
+          
+          <img
+            id="profilePhoto"
+            src="profile-photo-2024.png"
+            alt="Obaid Pursuit"
+            class="profile-photo"
+          />
+          
+        </div>
+      </div>
+    </div>
+    <div id="email-div" class="icon-divs" >Email Me!
+      <a href="mailto:obaidrustemi@pursuit.org" target="_blank"><img src="email.png"></a>
+    </div>
+    <!-- here -->
+  </div>
+
+    
+    <div id="thirdContainer" class="containerLinks">
+      <div>
+        <h1>Projects</h1>
+        <div id="projects-div">
+          <div class="project1">
+            <h2>Star Wars Game</h2>
+            <p><a class="project-link"href="https://github.com/ObaidRustemi/FSW-Text-Based-Adventure" target="_blank" >Github Repo Link</a></p>
+            <img class="project-screenshot" src= "https://i.ibb.co/p02qZzJ/Text-Based-Adventure-Screenshot.png"
+            alt="Text-Based-Adventure-Screenshot" width="300" height="auto">
+            <p class="project-description-p">Terminal-based Star Wars game. You can choose between 2 
+              <br>different adventures and each adventure has multiple paths</p>
+          </div>
+          <div class="project2"><h2>Snowman</h2>
+            <p><a class="project-link"href="https://github.com/ObaidRustemi/FSW-CLI-Snowman"target="_blank" >Github Repo Link</a></p>
+            <img class="project-screenshot" src= "https://i.ibb.co/XkkK879/Screen-Shot-2021-03-20-at-3-39-48-PM.png" 
+            alt="Snowman Screenshot" width="300" height="auto">
+            <p class="project-description-p">A terminal-based hangman game</p></div>
+          <div class="project3"><h2>To Do App</h2>
+            <p><a class="project-link"href="https://github.com/ObaidRustemi/Pursuit-Core-Events-Lab"target="_blank" >Github Link</a></p>
+            <a href="https://obaidrustemi.github.io/Pursuit-Core-Events-Lab/"target="_blank"><img class="project-screenshot" src= "https://i.ibb.co/bPhCtPq/To-Do-Screenshot.png" 
+            alt="To Do Screenshot" width="300" height="auto"></a>
+            <p class="project-description-p">An App that allows you to maintain a personal To Do list. 
+              <br> You can delete a To Do when complete. 
+            </p></div>
+            <div class="project4"><h2>Jokes App</h2>
+            <p><a class="project-link"href="https://github.com/ObaidRustemi/Pursuit-Core-Web-Promises-Fetch-Lab-v2"target="_blank" >Github Link</a></p>
+            <a href="https://obaidrustemi.github.io/Pursuit-Core-Web-Promises-Fetch-Lab-v2/"target="_blank"><img class="project-screenshot" src= "https://i.ibb.co/JBkthyF/Jokes-App-Screenshot.png" 
+            alt="Jokes App screenshot" width="300" height="auto"></a>
+            <p class="project-description-p">Loads 10 jokes at a time from a Jokes API. Clicking <br>
+            on the box will reveal the joke's punchline</p></div>
+          </div>
+          <div class="project5"><h2>Playing Cards Dealer</h2>
+            <p><a class="project-link"href="https://github.com/ObaidRustemi/Pursuit-Core-Web-Async-Await-Lab"target="_blank" >Github Live Page Link</a></p>
+            <a href="https://obaidrustemi.github.io/Pursuit-Core-Web-Async-Await-Lab/"target="_blank"><img class="project-screenshot" src= "https://i.ibb.co/cYsyfJR/Cards-App-Screenshot.png" 
+            alt="Card Dealer App screenshot" width="300" height="auto"></a>
+            <p class="project-description-p">App that uses a playing cards API to generate a fresh deck of cards. <br>
+            you can draw 1-10 cards from the deck until the deck is finished</p></div>
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+    <div id="fourthContainer">
+      <h1>Skills</h1>
+      <div id="skills-container">
+        <div class="skills-div" id="javascript">
+          <img src="javascript.png">
+          <p classlist="skills-p">Javascript</p>
+        </div>
+        <div class="skills-div" id="react">
+          <img src="ReactIcon.png">
+          <p classlist="skills-p">ReactJS</p>
+        </div>
+        <div class="skills-div" id="html">
+          <img src="html5.png">
+          <p classlist="skills-p">HTML</p>
+        </div>
+        <div class="skills-div" id="css">
+          <img src="css.png">
+          <p classlist="skills-p">CSS</p>
+        </div>
+        <div class="skills-div" id="github">
+          <img src="github2.png">
+          <p classlist="skills-p">GitHub</p>
+        </div>
+        <div class="skills-div" id="postgres">
+          <img src="postgresql.png">
+          <p classlist="skills-p">Postgres</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHADER SYSTEM: WebGL Water Effects (loads after DOM) -->
+    <script type="module" src="shader-system.js"></script>
+    <!-- Weather Controller: Snow (main page) ⇄ Rain (overlay menu) -->
+    <script type="module" src="weather-controller.js"></script>
+  </body>
+</html>
+ 

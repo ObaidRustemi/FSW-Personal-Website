@@ -25,13 +25,13 @@
     <script src="/raindrop-fx.js"></script>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <title>Obaid Rustemi - Portfolio</title>
   </head>
   <body>
   
     <!-- SHADER SYSTEM: Three.js ES Modules for WebGL Water Shaders -->
-    <!-- 🌊 TIER A: SVG Filters for Realistic Water Droplets -->
+    <!-- 🌊 TIER A: SVG Filters for Realistic Water Droplets & Glass Distortion -->
     <svg width="0" height="0" style="position: absolute; pointer-events: none;" aria-hidden="true">
       <defs>
         <filter id="dropletShine" x="-50%" y="-50%" width="200%" height="200%">
@@ -45,6 +45,27 @@
             <feMergeNode in="SourceGraphic"/>
             <feMergeNode in="specMask"/>
           </feMerge>
+        </filter>
+        
+        <!-- 🔮 Liquid Glass Distortion Filter - Subtle & Natural -->
+        <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+          <feTurbulence type="fractalNoise" baseFrequency="0.01 0.01" numOctaves="1" seed="5" result="turbulence"></feTurbulence>
+          
+          <feComponentTransfer in="turbulence" result="mapped">
+            <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"></feFuncR>
+            <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"></feFuncG>
+            <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"></feFuncB>
+          </feComponentTransfer>
+          
+          <feGaussianBlur in="turbulence" stdDeviation="4" result="softMap"></feGaussianBlur>
+          
+          <feSpecularLighting in="softMap" surfaceScale="3" specularConstant="0.8" specularExponent="100" lighting-color="white" result="specLight">
+            <fePointLight x="-200" y="-200" z="300"></fePointLight>
+          </feSpecularLighting>
+          
+          <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"></feComposite>
+          
+          <feDisplacementMap in="SourceGraphic" in2="softMap" scale="20" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
         </filter>
       </defs>
     </svg>
@@ -255,42 +276,46 @@
       <div id="secondContainer" class="containerLinks">
         <h1>About Me</h1>
         <div id="about-me-div">
-        <div id="mobile-profile-div">
-          <img
-              id="mobileProfilePhoto"
+          <!-- Profile photo - shown first on mobile, positioned properly on desktop -->
+          <div id="profile-photo-div">
+            <img
+              id="profilePhoto"
               src="profile-photo-2024.png"
               alt="Obaid Pursuit"
               class="profile-photo"
             />
-        </div>
-        
-        <div>
-          <p class="paragraph-text">
-            Hi, I'm Obaid (Obie) Rustemi — a New Yorker with California roots and a lifelong love for technology. I grew up between Silicon Valley's early tech boom and the energy of New York, and those experiences shaped my curiosity and drive.
-            <br /><br />
-            I began my career at Uber as an Android Mobile Engineer, where I transitioned from building with JavaScript, React, and HTML into the deep world of Kotlin, Java, and RxJava. Over time, I shifted into technical program management, where I now bridge engineering and strategy — helping ambitious projects scale while keeping my hands close to the technical details.
-            <br /><br />
-            My journey hasn't been a straight line: I didn't take the traditional college-to-career path. Instead, I fought through setbacks, taught myself to code, built resilience through trial and error, and carved out a career I'm proud of. That winding road gave me a unique perspective on both the technical and human sides of building products.
-            <br /><br />
-            Outside of work, I'm endlessly fascinated by how things connect — whether it's deep learning and neuro-symbolic AI, sports strategy, or the way history and culture shape our world. I'm a fan of UFC (Fedor will always be the 🐐), sneakers, gaming, and binge-watching shows with my wife. I also love traveling, winter weather, and long walks that spark big ideas.
-            <br /><br />
-            Right now, I'm sharpening my coding skills again — experimenting with new tools, creating projects, and rediscovering the fun that first drew me into tech.
-            <br /><br />
-            Thanks for stopping by. If you'd like to connect, you can find me on LinkedIn or reach out by email.
-          </p>
-        </div>
-        
-        <div id="profile-photo-div">
+          </div>
           
-          <img
-            id="profilePhoto"
-            src="profile-photo-2024.png"
-            alt="Obaid Pursuit"
-            class="profile-photo"
-          />
-          
+          <!-- Text content - shown after photo -->
+          <div class="about-me-text">
+            <p class="paragraph-text">
+              Hi, I'm Obaid (Obie) Rustemi — a New Yorker with California roots and a lifelong love for technology. I grew up between Silicon Valley's early tech boom and the energy of New York, and those experiences shaped my curiosity and drive.
+              <br /><br />
+              I began my career at Uber as an Android Mobile Engineer, where I transitioned from building with JavaScript, React, and HTML into the deep world of Kotlin, Java, and RxJava. Over time, I shifted into technical program management, where I now bridge engineering and strategy — helping ambitious projects scale while keeping my hands close to the technical details.
+              <br /><br />
+              My journey hasn't been a straight line: I didn't take the traditional college-to-career path. Instead, I fought through setbacks, taught myself to code, built resilience through trial and error, and carved out a career I'm proud of. That winding road gave me a unique perspective on both the technical and human sides of building products.
+              <br /><br />
+              Outside of work, I'm endlessly fascinated by how things connect — whether it's deep learning and neuro-symbolic AI, sports strategy, or the way history and culture shape our world. I'm a fan of UFC (Fedor will always be the 🐐), sneakers, gaming, and binge-watching shows with my wife. I also love traveling, winter weather, and long walks that spark big ideas.
+              <br /><br />
+              Right now, I'm sharpening my coding skills again — experimenting with new tools, creating projects, and rediscovering the fun that first drew me into tech.
+              <br /><br />
+              Thanks for stopping by. If you'd like to connect, you can find me on LinkedIn or reach out by email.
+            </p>
+          </div>
         </div>
+      
+      <!-- Modern Social Icons -->
+      <div class="social-icons-container">
+        <a href="https://www.linkedin.com/in/obaid-rustemi-0314a355/" target="_blank" class="social-icon">
+          <img src="linkedin.png" alt="LinkedIn">
+          <span>LinkedIn</span>
+        </a>
+        <a href="mailto:obaidrustemi@pursuit.org" target="_blank" class="social-icon">
+          <img src="email.png" alt="Email">
+          <span>Email Me</span>
+        </a>
       </div>
+      
     </div>
     <div id="email-div" class="icon-divs" >Email Me!
       <a href="mailto:obaidrustemi@pursuit.org" target="_blank"><img src="email.png"></a>
@@ -323,21 +348,21 @@
             <p class="project-description-p">An App that allows you to maintain a personal To Do list. 
               <br> You can delete a To Do when complete. 
             </p></div>
-            <div class="project4"><h2>Jokes App</h2>
+          <div class="project4"><h2>Jokes App</h2>
             <p><a class="project-link"href="https://github.com/ObaidRustemi/Pursuit-Core-Web-Promises-Fetch-Lab-v2"target="_blank" >Github Link</a></p>
             <a href="https://obaidrustemi.github.io/Pursuit-Core-Web-Promises-Fetch-Lab-v2/"target="_blank"><img class="project-screenshot" src= "https://i.ibb.co/JBkthyF/Jokes-App-Screenshot.png" 
             alt="Jokes App screenshot" width="300" height="auto"></a>
             <p class="project-description-p">Loads 10 jokes at a time from a Jokes API. Clicking <br>
-            on the box will reveal the joke's punchline</p></div>
+            on the box will reveal the joke's punchline</p>
           </div>
+          
           <div class="project5"><h2>Playing Cards Dealer</h2>
             <p><a class="project-link"href="https://github.com/ObaidRustemi/Pursuit-Core-Web-Async-Await-Lab"target="_blank" >Github Live Page Link</a></p>
             <a href="https://obaidrustemi.github.io/Pursuit-Core-Web-Async-Await-Lab/"target="_blank"><img class="project-screenshot" src= "https://i.ibb.co/cYsyfJR/Cards-App-Screenshot.png" 
             alt="Card Dealer App screenshot" width="300" height="auto"></a>
             <p class="project-description-p">App that uses a playing cards API to generate a fresh deck of cards. <br>
-            you can draw 1-10 cards from the deck until the deck is finished</p></div>
-        </div>
-      </div>
+            you can draw 1-10 cards from the deck until the deck is finished</p>
+          </div>
         </div>
       </div>
     </div>
@@ -375,6 +400,19 @@
     <script type="module" src="shader-system.js"></script>
     <!-- Weather Controller: Snow (main page) ⇄ Rain (overlay menu) -->
     <script type="module" src="weather-controller.js"></script>
+    
+    <!-- Menu Scroll Control: Disable scrolling when overlay is open -->
+    <script>
+      $(document).ready(function() {
+        $('.menu-wrap .toggler').on('change', function() {
+          if ($(this).is(':checked')) {
+            $('body').css('overflow', 'hidden');
+          } else {
+            $('body').css('overflow', '');
+          }
+        });
+      });
+    </script>
   </body>
 </html>
  

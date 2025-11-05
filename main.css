@@ -4,36 +4,80 @@
 }
 
 #secondContainerWrap {
-/* border: 3px solid red; */
-display: flex;
-justify-content: space-around;
-color: white;
-text-align: center;
+  /* Container for About Me section */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+  width: 100%;
+  padding: 20px;
 }
 
-.icon-divs {
-margin-top: 35%;  
-height: 160px;
-width: auto;
-/* position: absolute;
-bottom: 2px; */
-}
 .mobile-icon-divs {
   visibility: hidden;
 }
 
 
 #secondContainer {
-  background-color: black;
-  width: 50%;
+  /* Liquid Glass Effect - EXACT CodePen Reference */
+  position: relative;
+  width: 100%; /* Matching width with Projects container */
+  max-width: 1200px; /* Modern max-width for readability */
   height: auto;
   min-height: 600px;
-  padding-bottom: 50px;
+  padding: 50px 60px; /* Balanced padding */
   text-align: center;
   align-items: center;
-  /* border-style: solid; */
-  /* border-color: blue; */
   color: white;
+  overflow: hidden;
+  border-radius: 24px;
+  margin: 0 auto; /* Center the container */
+  
+  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+  
+  /* Performance optimizations */
+  will-change: transform;
+  contain: layout style paint;
+  transform: translateZ(0); /* GPU acceleration */
+}
+
+#secondContainer::before {
+  /* Glass blur effect - EXACT reference */
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  filter: url(#glass-distortion);
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 24px;
+  
+  /* Performance optimizations */
+  will-change: filter;
+  transform: translateZ(0); /* GPU acceleration */
+}
+
+#secondContainer::after {
+  /* Tint + Shine layers combined - EXACT reference */
+  content: '';
+  z-index: 1;
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 2px 2px 1px 0 rgba(255, 255, 255, 0.5),
+    inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+#secondContainer > * {
+  position: relative;
+  z-index: 3;
 }
 
 .paragraph-text {
@@ -48,12 +92,9 @@ bottom: 2px; */
 }
 
 #mobile-profile-div {
-  /* visibility: hidden; */
-  /* border: 2px solid green; */
-  width: 1px;
-  height:1px;
-  align-items: flex-start;
-  justify-content: flex-start;
+  /* Hide old mobile profile div - we use the regular profile photo */
+  display: none;
+  visibility: hidden;
 }
 
 #mobileProfilePhoto {
@@ -61,50 +102,239 @@ bottom: 2px; */
 
 }
 
+/* Modern social icons inside About Me container - NO extra glass */
+.social-icons-container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.social-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: white;
+  transition: all 0.3s ease;
+  padding: 20px 30px;
+  border-radius: 12px;
+  background: transparent; /* Fully transparent */
+  border: none; /* No border */
+}
+
+.social-icon:hover {
+  transform: translateY(-3px);
+  background: transparent; /* Keep transparent on hover */
+}
+
+.social-icon img {
+  width: 48px;
+  height: 48px;
+  transition: all 0.3s ease;
+  filter: brightness(0.9);
+}
+
+.social-icon:hover img {
+  transform: scale(1.1);
+  filter: brightness(1.1);
+}
+
+.social-icon span {
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Hide old icon divs outside container */
 .icon-divs {
-  /* border: 3px solid white; */
-  width: 10%;
-  
+  display: none;
 }
 
 #thirdContainer {
+  /* Liquid Glass Effect - EXACT CodePen Reference */
+  position: relative;
   width: 100%;
+  max-width: 1200px; /* Matching max-width with About Me */
   height: 100%;
-  margin-top: 50px;
-  /* border-style: solid; */
-  color: black;
-  background-color: #434a5c;
+  margin: 50px auto 0; /* Center the container */
+  padding: 50px 60px; /* Consistent padding */
+  color: white;
   text-align: center;
+  overflow: hidden;
+  border-radius: 24px;
+  
+  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+  
+  /* Performance optimizations */
+  will-change: transform;
+  contain: layout style paint;
+  transform: translateZ(0); /* GPU acceleration */
+}
+
+#thirdContainer::before {
+  /* Glass blur effect - EXACT reference */
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  filter: url(#glass-distortion);
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 24px;
+  
+  /* Performance optimizations */
+  will-change: filter;
+  transform: translateZ(0); /* GPU acceleration */
+}
+
+#thirdContainer::after {
+  /* Tint + Shine layers combined - EXACT reference */
+  content: '';
+  z-index: 1;
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 2px 2px 1px 0 rgba(255, 255, 255, 0.5),
+    inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+#thirdContainer > * {
+  position: relative;
+  z-index: 3;
 }
 
 #fourthContainer {
-  margin-top: 15px;
+  /* Liquid Glass Effect - EXACT CodePen Reference */
+  position: relative;
+  margin: 50px auto 0; /* Center and add consistent spacing */
   width: 100%;
+  max-width: 1200px; /* Matching max-width for consistency */
   height: 100%;
-  border-style: solid;
-  /* border-color: red; */
-  color: black;
-  background-color: black;
+  color: white;
   text-align: center;
+  overflow: hidden;
+  padding: 50px 60px; /* Consistent padding */
+  border-radius: 24px;
+  
+  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
+  
+  /* Performance optimizations */
+  will-change: transform;
+  contain: layout style paint;
+  transform: translateZ(0); /* GPU acceleration */
+}
+
+#fourthContainer::before {
+  /* Glass blur effect - EXACT reference */
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  filter: url(#glass-distortion);
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 24px;
+  
+  /* Performance optimizations */
+  will-change: filter;
+  transform: translateZ(0); /* GPU acceleration */
+}
+
+#fourthContainer::after {
+  /* Tint + Shine layers combined - EXACT reference */
+  content: '';
+  z-index: 1;
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 2px 2px 1px 0 rgba(255, 255, 255, 0.5),
+    inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+#fourthContainer > * {
+  position: relative;
+  z-index: 3;
 }
 
 #projects-div {
-  /* width: 95%; */
-  /* height: 95%; */
-  /* border-style: solid; */
-  /* border-color: white; */
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  transition: transform 0.4s;
+  /* Modern 3-column grid layout */
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-top: 30px;
+  padding: 20px 0;
+  
+  /* Performance optimizations */
+  will-change: contents;
+  contain: layout;
+}
+
+/* Stack to 2 columns on tablets */
+@media (max-width: 900px) {
+  #projects-div {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Stack to 1 column on mobile */
+@media (max-width: 600px) {
+  #projects-div {
+    grid-template-columns: 1fr;
+  }
+}
+
+.project-screenshot {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 15px 0;
+  transition: all 0.3s ease;
 }
 
 .project-screenshot:hover {
-  transform: scale(1.2);
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Individual project cards - NO glass effect, clean and simple */
+.project1, .project2, .project3, .project4, .project5 {
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s ease;
+  border: none; /* No border */
+  background: transparent; /* Fully transparent, no background */
+}
+
+.project1:hover, .project2:hover, .project3:hover, .project4:hover, .project5:hover {
+  transform: translateY(-5px);
+  background: transparent; /* Keep transparent even on hover */
+}
+
+.project1 h2, .project2 h2, .project3 h2, .project4 h2, .project5 h2 {
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+  color: white;
+  font-weight: 600;
 }
 
 .projects {
-  width: 50%;
+  width: 100%; /* Full width within grid cell */
 }
 #profilePhoto {
   margin-left: auto;
@@ -139,26 +369,49 @@ bottom: 2px; */
 }
 
 .project-description-p {
-  font-size: 14px;
-  padding: 2px;
-  margin: 2px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  padding: 10px 0;
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.project-screenshot {
-  position: relative;
+.project-link {
+  color: #4fc3f7;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.project-link:hover {
+  color: #81d4fa;
+  transform: translateX(3px);
 }
 
 .project-link:visited {
-  color: blue;
+  color: #29b6f6;
 }
 
 .skills-div {
   display: inline-block;
   width: 30%;
   height: auto;
-  /* border-style: solid; */
-  background-color: black;
+  position: relative;
+  padding: 25px;
+  margin: 10px;
+  border-radius: 12px;
+  overflow: hidden;
   color: white;
+  background: transparent; /* Fully transparent */
+  border: none; /* No border */
+  transition: all 0.3s ease;
+}
+
+.skills-div:hover {
+  transform: translateY(-5px);
+  background: transparent; /* Keep transparent on hover */
 }
 
 #fourthContainer > h1 {

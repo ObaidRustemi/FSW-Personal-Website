@@ -1,30 +1,9 @@
 /* Tablet and mobile breakpoint */
 @media (max-width: 975px) {
+  /* Hide old mobile container - use new liquid glass container instead */
   #mobileSecondContainer {
-    visibility: visible;
-    height: 850px;
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(10, 1fr);
-    grid-template-areas:
-      ". p p p . l l l"
-      ". p p p . l l l"
-      ". p p p . e e e"
-      ". p p p . e e e"
-      ". m m m m m m ."
-      ". m m m m m m ."
-      ". m m m m m m ."
-      ". m m m m m m ."
-      ". m m m m m m ."
-      ". m m m m m m .";
-
-    /* border: red 2px solid; */
-    grid-gap: 1px;
-    /* grid-auto-rows: 300px; */
-    text-align: center;
-    vertical-align: middle;
-    line-height: 300px;
-    color: white;
+    display: none !important;
+    visibility: hidden !important;
   }
 
   #mobile-profile-photo-div {
@@ -74,87 +53,233 @@
   }
 
   .project-description-p {
-    font-size: 14px;
-    padding: 2px;
-    margin-bottom: 20px;
+    font-size: 0.9rem;
+    padding: 10px 5px;
+    margin-bottom: 15px;
+    line-height: 1.5;
+  }
+  
+  .project1, .project2, .project3, .project4, .project5 {
+    padding: 15px;
+  }
+  
+  .project1 h2, .project2 h2, .project3 h2, .project4 h2, .project5 h2 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+  
+  .project-screenshot {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 10px 0;
+  }
+  
+  .project-link {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+    /* Ensure touch targets are at least 44px */
+    min-height: 44px;
+    text-align: center;
   }
   .mobileDivs {
-    background-color: black;
-    border: 1px black solid;
+    /* Remove black background - use transparent/glass effect instead */
+    background: transparent;
+    border: none;
   }
 
   #secondContainerWrap {
-    visibility: hidden;
-    display: none;
+    /* Keep visible on mobile - we want to show the liquid glass container */
+    display: block;
+    visibility: visible;
+    width: 100%;
   }
 
   #secondContainer {
-    background-color: black;
-    width: 50%;
-    height: 640px;
+    width: 100%;
+    max-width: 100%;
+    padding: 30px 20px;
+    margin: 30px auto 0;
+    min-height: auto;
+    height: auto;
     text-align: center;
     align-items: center;
-    /* border: 2px solid green; */
     color: white;
-    order: 1;
-    /* flex-direction: row; */
+    /* Keep liquid glass effects - they work on mobile */
+    visibility: visible !important;
+    display: block !important;
   }
   #about-me-div {
-    /* border: 4px solid orchid; */
-    display: inline-block;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    gap: 25px;
+    padding: 0;
   }
 
   .paragraph-text {
     color: white;
-    /* border: 2px solid white; */
+    font-size: 0.95rem;
+    line-height: 1.6;
+    padding: 0 10px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  /* Ensure no horizontal scrolling */
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  /* Ensure all containers respect viewport width */
+  #secondContainer,
+  #thirdContainer,
+  #fourthContainer,
+  .project1,
+  .project2,
+  .project3,
+  .project4,
+  .project5,
+  .skills-div,
+  .social-icon {
+    box-sizing: border-box;
+    max-width: 100%;
   }
 
+  /* Hide old mobile profile div - we only want one profile photo */
+  #mobile-profile-div {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  /* Show profile photo div - properly positioned */
   #profile-photo-div {
-    visibility: hidden;
+    display: block !important;
+    visibility: visible !important;
+    width: 100%;
+    margin: 0 auto 25px;
+    text-align: center;
+    order: 1; /* Show first in flex layout */
+  }
+  
+  /* About me text container */
+  .about-me-text {
+    order: 2; /* Show second in flex layout */
+    width: 100%;
+    margin-top: 0;
+  }
+  
+  /* Show only the profile photo in about-me-div - properly positioned */
+  #about-me-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px;
+    padding: 0;
+  }
+  
+  /* Profile photo in About Me - responsive sizing and proper spacing */
+  #profilePhoto,
+  .profile-photo {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    margin: 0 auto;
+    display: block;
   }
 
   .icon-divs {
-    margin-top: none;
-    /* border: 3px solid white; */
-    height: 200px;
-    width: 200px;
-    visibility: hidden;
+    /* Completely hide old desktop icons on mobile */
+    display: none !important;
+    visibility: hidden !important;
   }
-
-  .paragraph-text {
-    color: white;
-    /* border: 2px solid white; */
+  
+  /* Also hide the specific old icon divs */
+  #linkedin-div,
+  #email-div {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  /* Social icons in About Me - mobile responsive */
+  .social-icons-container {
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px 0;
+  }
+  
+  .social-icon {
+    padding: 15px 20px;
+    min-width: 120px;
+    /* Ensure touch targets are adequate */
+    min-height: 60px;
+  }
+  
+  .social-icon img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .social-icon span {
+    font-size: 0.9rem;
   }
 
   /* end of second container  */
 
   .skills-div {
-    display: block;
-    width: 80%;
+    display: inline-block;
+    width: 45%;
     height: auto;
-    object-fit: cover;
-    /* border-style: solid; */
-    background-color: black;
-    color: white;
-    align-items: center;
+    padding: 20px 15px;
+    margin: 10px 2%;
     text-align: center;
-    margin-bottom: 6px;
+    vertical-align: top;
+    /* Keep transparent background - no black override */
   }
 
   .skills-div > img {
-    width: 40%;
+    width: 60px;
     height: auto;
+    max-width: 100%;
   }
-  #fourthContainer {
-    margin-left: 10%;
-    align-items: center;
+  
+  .skills-div p {
+    font-size: 0.9rem;
+    margin-top: 10px;
+  }
+  #thirdContainer {
     width: 100%;
-    height: 100%;
-    /* border-style: solid; */
-    /* border-color: red; */
-    color: black;
-    background-color: black;
+    max-width: 100%;
+    padding: 30px 20px;
+    margin: 30px auto 0;
+  }
+  
+  #thirdContainer h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+  
+  #fourthContainer {
+    width: 100%;
+    max-width: 100%;
+    padding: 30px 20px;
+    margin: 30px auto 0;
     text-align: center;
+    /* Keep liquid glass effects - they work on mobile */
+  }
+  
+  #fourthContainer h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
   }
 
   .menu-wrap .hamburger > div {
@@ -192,23 +317,13 @@
     
     transform: scale(1.05);
   }
-}
-
+  
+  /* Projects grid - only override for mobile viewports */
   #projects-div {
-    /* width: 95%; */
-    /* height: 95%; */
-    /* border-style: solid; */
-    /* border-color: white; */
-    display: flex;
-    flex-direction: column;
-    /* align-content: center; */
-    /* align-items: center; */
-    /* justify-content: center; */
-    /* flex-wrap: wrap; */
-    transition: transform 0.4s;
+    /* Override grid for mobile - single column */
+    grid-template-columns: 1fr !important;
+    gap: 25px;
   }
-
-
 }
 
 /* Small mobile devices - extra optimizations */
@@ -230,5 +345,61 @@
   #mobileSecondContainer {
     height: auto;
     min-height: 600px;
+  }
+  
+  /* Extra small mobile - tighter spacing */
+  #secondContainer,
+  #thirdContainer,
+  #fourthContainer {
+    padding: 20px 15px;
+  }
+  
+  #secondContainer h1,
+  #thirdContainer h1,
+  #fourthContainer h1 {
+    font-size: 1.75rem;
+  }
+  
+  .paragraph-text {
+    font-size: 0.9rem;
+    padding: 0 5px;
+  }
+  
+  .skills-div {
+    width: 48%;
+    margin: 8px 1%;
+    padding: 15px 10px;
+  }
+  
+  .skills-div > img {
+    width: 50px;
+  }
+  
+  #profilePhoto,
+  .profile-photo {
+    max-width: 220px;
+  }
+  
+  .social-icon {
+    padding: 12px 15px;
+    min-width: 100px;
+  }
+  
+  .social-icon img {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .project1 h2, .project2 h2, .project3 h2, .project4 h2, .project5 h2 {
+    font-size: 1.1rem;
+  }
+  
+  .project-description-p {
+    font-size: 0.85rem;
+  }
+  
+  .project-link {
+    font-size: 0.85rem;
+    padding: 6px 0;
   }
 }
